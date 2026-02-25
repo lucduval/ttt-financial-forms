@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 60" fill="none">
+  <!-- TTT Slanted Lines -->
+  <g transform="translate(0, 5)">
+    <!-- First T -->
+    <polygon points="10,50 18,0 38,0 30,50" fill="white"/>
+    <polygon points="5,10 45,10 43,0 7,0" fill="white"/>
+    <!-- Second T -->
+    <polygon points="35,50 43,0 63,0 55,50" fill="white"/>
+    <polygon points="30,10 70,10 68,0 32,0" fill="white"/>
+    <!-- Third T -->
+    <polygon points="60,50 68,0 88,0 80,50" fill="white"/>
+    <polygon points="55,10 95,10 93,0 57,0" fill="white"/>
+  </g>
+  <!-- FINANCIAL GROUP text -->
+  <text x="10" y="58" font-family="Arial, sans-serif" font-size="8" font-weight="600" letter-spacing="1.5" fill="white">FINANCIAL GROUP</text>
+</svg>
