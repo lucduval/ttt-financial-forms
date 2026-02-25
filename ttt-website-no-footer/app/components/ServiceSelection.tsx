@@ -5,9 +5,10 @@ import { Shield, FileText, Calculator, TrendingUp, ArrowRight } from 'lucide-rea
 
 interface ServiceSelectionProps {
     onSelect: (service: string) => void;
+    hideHeader?: boolean;
 }
 
-export default function ServiceSelection({ onSelect }: ServiceSelectionProps) {
+export default function ServiceSelection({ onSelect, hideHeader }: ServiceSelectionProps) {
     const services = [
         {
             id: 'insurance',
@@ -45,12 +46,16 @@ export default function ServiceSelection({ onSelect }: ServiceSelectionProps) {
 
     return (
         <div className="min-h-[60vh] flex flex-col items-center justify-center p-4">
-            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4 text-center">
-                Welcome to TTT Financial Group
-            </h1>
-            <p className="text-lg text-slate-600 mb-12 text-center max-w-2xl">
-                Please select the service you are interested in today so we can direct you to the right specialist.
-            </p>
+            {!hideHeader && (
+                <>
+                    <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4 text-center">
+                        Welcome to TTT Financial Group
+                    </h1>
+                    <p className="text-lg text-slate-600 mb-12 text-center max-w-2xl">
+                        Please select the service you are interested in today so we can direct you to the right specialist.
+                    </p>
+                </>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl w-full">
                 {services.map((service) => (

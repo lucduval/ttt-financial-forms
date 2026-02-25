@@ -5,7 +5,7 @@ import ClientOnboardingForm from "@/app/components/ClientOnboardingForm";
 import ServiceSelection from "@/app/components/ServiceSelection";
 import SimpleOnboardingForm from "@/app/components/SimpleOnboardingForm";
 
-export default function OnboardingPage() {
+export default function OnboardingPage({ hideHeader }: { hideHeader?: boolean } = {}) {
   const [selectedService, setSelectedService] = useState<string | null>(null);
 
   const handleServiceSelect = (serviceId: string) => {
@@ -19,7 +19,7 @@ export default function OnboardingPage() {
   return (
     <div className="w-full pt-12 pb-16">
       {!selectedService && (
-        <ServiceSelection onSelect={handleServiceSelect} />
+        <ServiceSelection onSelect={handleServiceSelect} hideHeader={hideHeader} />
       )}
 
       {selectedService === "accounting" && (

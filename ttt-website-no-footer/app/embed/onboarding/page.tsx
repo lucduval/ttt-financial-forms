@@ -6,5 +6,5 @@ export const metadata: Metadata = {
 };
 
 export default function EmbedOnboarding() {
-  return <OnboardingPage />;
+  return <OnboardingPage hideHeader />;
 }
