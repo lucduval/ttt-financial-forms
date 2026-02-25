@@ -280,7 +280,7 @@ function SmartAdvice({
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-export default function TaxCalculatorPage() {
+export default function TaxCalculatorPage({ noBg }: { noBg?: boolean } = {}) {
   const [taxYear, setTaxYear] = useState("2026");
   const [period, setPeriod] = useState<"monthly" | "yearly">("monthly");
   const [grossIncome, setGrossIncome] = useState(35000);
@@ -342,7 +342,7 @@ export default function TaxCalculatorPage() {
     n.toLocaleString("en-ZA", { maximumFractionDigits: 0 });
 
   return (
-    <div className="bg-[#F8FAFC]">
+    <div className={noBg ? "bg-white" : "bg-[#F8FAFC]"}>
       {/* Page Hero */}
       <div className="bg-gradient-to-r from-[#0077BB] to-[#0168A2] text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -404,8 +404,8 @@ export default function TaxCalculatorPage() {
                     key={p}
                     onClick={() => setPeriod(p)}
                     className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all capitalize ${period === p
-                        ? "bg-white text-[#0077BB] shadow-sm"
-                        : "text-slate-500 hover:text-slate-700"
+                      ? "bg-white text-[#0077BB] shadow-sm"
+                      : "text-slate-500 hover:text-slate-700"
                       }`}
                   >
                     {p}
@@ -686,10 +686,10 @@ function Row({
   return (
     <div
       className={`flex justify-between text-sm ${green
-          ? "text-emerald-600"
-          : accent
-            ? "text-[#0077BB] font-medium"
-            : "text-slate-600"
+        ? "text-emerald-600"
+        : accent
+          ? "text-[#0077BB] font-medium"
+          : "text-slate-600"
         }`}
     >
       <span>{label}</span>
@@ -717,10 +717,10 @@ function SlipItem({
       <p className="text-xs text-slate-500 font-medium mb-1">{label}</p>
       <p
         className={`text-lg font-bold ${highlight
-            ? "text-[#0077BB]"
-            : negative
-              ? "text-rose-600"
-              : "text-slate-800"
+          ? "text-[#0077BB]"
+          : negative
+            ? "text-rose-600"
+            : "text-slate-800"
           }`}
       >
         {value}
