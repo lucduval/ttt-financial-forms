@@ -14,13 +14,13 @@ import { useEffect } from "react";
 export default function IframeResizer() {
     useEffect(() => {
         const sendHeight = () => {
-            // Use the larger of body/documentElement to handle all browser quirks.
-            // +1px buffer prevents subpixel rounding from causing a brief scrollbar.
-            const height =
-                Math.max(
-                    document.body.scrollHeight,
-                    document.documentElement.scrollHeight
-                ) + 1;
+            // Measure the content wrapper's offsetHeight — NOT body.scrollHeight.
+            // With overflow:hidden on body, scrollHeight equals the iframe viewport
+            // height, so the old +1px buffer caused a 1px-per-cycle grow loop.
+            // offsetHeight of the actual content div is never influenced by the
+            // iframe container size — no feedback loop possible.
+            const content = document.querySelector("[data-embed-content]") as HTMLElement | null;
+            const height = content ? content.offsetHeight : document.documentElement.offsetHeight;
             window.parent.postMessage({ type: "FORM_HEIGHT", height }, "*");
         };
 
