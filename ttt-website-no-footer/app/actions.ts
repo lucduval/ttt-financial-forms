@@ -251,14 +251,17 @@ export async function submitTargetData(data: FormSubmitData, serviceType: string
             console.log("All documents uploaded successfully.");
         }
 
-        // Fire-and-forget: send emails without blocking the response
+        // Send emails after successful lead creation
         if (options?.sendEmails !== false) {
-            sendTeamNotificationEmail(data, serviceType).catch((err) =>
-                console.error("Team notification email failed:", err)
-            );
-            sendClientThankYouEmail(data, serviceType).catch((err) =>
-                console.error("Client thank-you email failed:", err)
-            );
+            try {
+                await Promise.all([
+                    sendTeamNotificationEmail(data, serviceType),
+                    sendClientThankYouEmail(data, serviceType),
+                ]);
+                console.log("Emails sent successfully.");
+            } catch (emailError) {
+                console.error("Email sending failed:", emailError);
+            }
         }
 
         return { success: true, dynamicsId: dynamicsId };
