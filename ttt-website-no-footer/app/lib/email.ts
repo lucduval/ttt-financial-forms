@@ -84,7 +84,8 @@ async function sendEmail(
 
 export async function sendTeamNotificationEmail(
     data: EmailData,
-    serviceType: string
+    serviceType: string,
+    dynamicsId?: string | null
 ): Promise<void> {
     const teamAddresses = process.env.EMAIL_TEAM_ADDRESSES;
     if (!teamAddresses) {
@@ -97,7 +98,7 @@ export async function sendTeamNotificationEmail(
 
     const clientName = data.contactPerson || data.name || "Unknown";
     const subject = `New ${serviceType.charAt(0).toUpperCase() + serviceType.slice(1)} Lead — ${clientName}`;
-    const html = buildTeamNotificationHtml(data, serviceType);
+    const html = buildTeamNotificationHtml(data, serviceType, dynamicsId);
 
     await sendEmail(recipients, subject, html);
 }

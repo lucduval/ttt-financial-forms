@@ -255,7 +255,7 @@ export async function submitTargetData(data: FormSubmitData, serviceType: string
         if (options?.sendEmails !== false) {
             try {
                 await Promise.all([
-                    sendTeamNotificationEmail(data, serviceType),
+                    sendTeamNotificationEmail(data, serviceType, dynamicsId),
                     sendClientThankYouEmail(data, serviceType),
                 ]);
                 console.log("Emails sent successfully.");

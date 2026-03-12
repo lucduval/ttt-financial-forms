@@ -59,11 +59,15 @@ function getSelectedServices(services?: Record<string, boolean | string | undefi
         .map(([k]) => SERVICE_LABELS[k] || k);
 }
 
-export function buildTeamNotificationHtml(data: EmailData, serviceType: string): string {
+export function buildTeamNotificationHtml(data: EmailData, serviceType: string, dynamicsId?: string | null): string {
     const clientName = getClientName(data);
     const clientTypeLabel = CLIENT_TYPE_LABELS[data.clientType ?? 0] || "Unknown";
     const selectedServices = getSelectedServices(data.services);
     const now = new Date().toLocaleString("en-ZA", { timeZone: "Africa/Johannesburg" });
+    const crmBaseUrl = process.env.DYNAMICS_RESOURCE_URL?.replace(/\/$/, "") || "";
+    const crmLink = dynamicsId && crmBaseUrl
+        ? `${crmBaseUrl}/main.aspx?pagetype=entityrecord&etn=new_lead&id=${dynamicsId}`
+        : "";
 
     let servicesHtml = "";
     if (selectedServices.length > 0) {
@@ -125,6 +129,7 @@ export function buildTeamNotificationHtml(data: EmailData, serviceType: string):
                                     <td style="padding: 8px 12px; border-bottom: 1px solid #eee;">${notesContent}</td>
                                 </tr>
                             </table>
+                            ${crmLink ? `<a href="${crmLink}" style="display: inline-block; margin-top: 16px; padding: 10px 20px; background-color: #0077BB; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 14px;">View in CRM</a>` : ""}
                         </td>
                     </tr>
                     <tr>
