@@ -1,6 +1,6 @@
 "use server";
 
-import { createRecord, getRecords } from "./lib/dynamics";
+import { createRecord, updateRecord, getRecords } from "./lib/dynamics";
 import { sendTeamNotificationEmail, sendClientThankYouEmail } from "./lib/email";
 
 export async function getIndustries() {
@@ -111,7 +111,7 @@ interface FormSubmitData {
 }
 
 
-export async function submitTargetData(data: FormSubmitData, serviceType: string, options?: { sendEmails?: boolean }) {
+export async function submitTargetData(data: FormSubmitData, serviceType: string, options?: { sendEmails?: boolean; existingLeadId?: string }) {
     console.log(`Submitting data for service: ${serviceType}`);
 
     let description = `Service Type: ${serviceType}\n\n`;
@@ -227,10 +227,19 @@ export async function submitTargetData(data: FormSubmitData, serviceType: string
             return { success: true, simulated: true };
         }
 
-        console.log("Creating Lead in Dynamics...");
-        const result = await createRecord('new_leads', leadData);
-        const dynamicsId = result.id;
-        console.log("Lead created with ID:", dynamicsId);
+        let dynamicsId: string | null = null;
+
+        if (options?.existingLeadId) {
+            console.log("Updating existing Lead in Dynamics:", options.existingLeadId);
+            await updateRecord('new_leads', options.existingLeadId, leadData);
+            dynamicsId = options.existingLeadId;
+            console.log("Lead updated with ID:", dynamicsId);
+        } else {
+            console.log("Creating Lead in Dynamics...");
+            const result = await createRecord('new_leads', leadData);
+            dynamicsId = result.id;
+            console.log("Lead created with ID:", dynamicsId);
+        }
 
         if (!dynamicsId) {
             console.warn("No lead ID returned — skipping document upload.");

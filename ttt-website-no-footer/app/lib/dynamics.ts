@@ -114,6 +114,40 @@ export async function createRecord(entityCollection: string, data: Record<string
     }
 }
 
+export async function updateRecord(entityCollection: string, id: string, data: Record<string, unknown>) {
+    const resource = process.env.DYNAMICS_RESOURCE_URL;
+    if (!resource) {
+        throw new Error("Missing Dynamics resource URL.");
+    }
+
+    const baseUrl = resource.endsWith('/') ? resource.slice(0, -1) : resource;
+    const apiUrl = `${baseUrl}/api/data/v9.2/${entityCollection}(${id})`;
+
+    try {
+        const token = await getAccessToken();
+
+        const response = await fetch(apiUrl, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Error updating record in ${entityCollection}:`, response.status, errorText);
+            throw new Error(`Failed to update record: ${response.statusText} - ${errorText}`);
+        }
+
+        return { id };
+    } catch (error) {
+        console.error("Error in updateRecord:", error);
+        throw error;
+    }
+}
+
 export async function getRecords(entityCollection: string, query: string = ""): Promise<{ success: boolean; value?: any[] }> {
     const resource = process.env.DYNAMICS_RESOURCE_URL;
     if (!resource) {

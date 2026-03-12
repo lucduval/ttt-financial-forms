@@ -31,6 +31,7 @@ export default function ClientOnboardingForm({ onBack }: ClientOnboardingFormPro
     const [submitted, setSubmitted] = useState(false);
     const [loading, setLoading] = useState(false);
     const [leadCreated, setLeadCreated] = useState(false);
+    const [backgroundLeadId, setBackgroundLeadId] = useState<string | null>(null);
     const [isBookingOpen, setIsBookingOpen] = useState(false);
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [rootElement, setRootElement] = useState<HTMLElement | null>(null);
@@ -118,7 +119,7 @@ export default function ClientOnboardingForm({ onBack }: ClientOnboardingFormPro
     const createLeadInBackground = async () => {
         if (leadCreated) return;
         try {
-            await submitTargetData({
+            const result = await submitTargetData({
                 clientType: formData.clientType ? parseInt(formData.clientType) : undefined,
                 companyName: isIndividual ? undefined : formData.companyName || undefined,
                 contactPerson: isIndividual ? formData.fullName : formData.fullName || undefined,
@@ -127,6 +128,9 @@ export default function ClientOnboardingForm({ onBack }: ClientOnboardingFormPro
                 phone: formData.phone,
             }, 'accounting', { sendEmails: false });
             setLeadCreated(true);
+            if (result.dynamicsId) {
+                setBackgroundLeadId(result.dynamicsId);
+            }
         } catch (error) {
             console.error("Error creating lead in background:", error);
         }
@@ -143,6 +147,9 @@ export default function ClientOnboardingForm({ onBack }: ClientOnboardingFormPro
 
     const nextStep = async () => {
         if (currentStep === 1 && !isStep1Valid()) return;
+        if (currentStep === 1) {
+            createLeadInBackground();
+        }
         if (currentStep < totalSteps) {
             setCurrentStep(prev => prev + 1);
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -170,7 +177,7 @@ export default function ClientOnboardingForm({ onBack }: ClientOnboardingFormPro
                 notes: formData.notes || undefined,
                 services: formData.services,
                 files: formData.files
-            }, 'accounting');
+            }, 'accounting', backgroundLeadId ? { existingLeadId: backgroundLeadId } : undefined);
             setSubmitted(true);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         } catch (error) {
