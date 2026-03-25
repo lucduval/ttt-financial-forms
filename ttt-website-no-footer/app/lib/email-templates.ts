@@ -193,7 +193,7 @@ export function buildClientThankYouHtml(
                     </tr>
                     <tr>
                         <td style="padding: 32px;">
-                            <p style="margin: 0 0 16px; font-size: 14px; color: #333;">Dear prospective client,</p>
+                            <p style="margin: 0 0 16px; font-size: 14px; color: #333;">Dear ${firstName},</p>
                             <p style="margin: 0 0 16px; font-size: 14px; color: #333;">Thank you for your interest in TTT Adaptive Accounting. We have received your introduction form and we are currently busy processing your information. We strive to provide accurate and timely information and services.</p>
                             <div style="font-size: 14px; color: #333;">
                                 ${consultationSection}

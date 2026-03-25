@@ -117,12 +117,18 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
     return (
         <div className="bg-slate-50 font-sans text-slate-900 flex flex-col">
             {/* Calendly Modal */}
-            <PopupModal
-                url="https://calendly.com/your-calendly-link"
-                onModalClose={() => setIsBookingOpen(false)}
-                open={isBookingOpen}
-                rootElement={rootElement!}
-            />
+            {rootElement && (
+                <PopupModal
+                    url={process.env.NEXT_PUBLIC_CALENDLY_URL || "https://calendly.com/your-calendly-link"}
+                    onModalClose={() => setIsBookingOpen(false)}
+                    open={isBookingOpen}
+                    rootElement={rootElement}
+                    prefill={{
+                        name: formData.name,
+                        email: formData.email,
+                    }}
+                />
+            )}
 
             <main className="flex-grow max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
                 <form onSubmit={handleSubmit} className="relative">

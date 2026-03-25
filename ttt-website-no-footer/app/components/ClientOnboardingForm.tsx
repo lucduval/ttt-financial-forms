@@ -335,12 +335,18 @@ export default function ClientOnboardingForm({ onBack }: ClientOnboardingFormPro
             )}
 
             {/* Calendly Modal */}
-            <PopupModal
-                url="https://calendly.com/your-calendly-link"
-                onModalClose={() => setIsBookingOpen(false)}
-                open={isBookingOpen}
-                rootElement={rootElement!}
-            />
+            {rootElement && (
+                <PopupModal
+                    url={process.env.NEXT_PUBLIC_CALENDLY_URL || "https://calendly.com/your-calendly-link"}
+                    onModalClose={() => setIsBookingOpen(false)}
+                    open={isBookingOpen}
+                    rootElement={rootElement}
+                    prefill={{
+                        name: formData.fullName,
+                        email: formData.email,
+                    }}
+                />
+            )}
 
             <main className="flex-grow max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
 
