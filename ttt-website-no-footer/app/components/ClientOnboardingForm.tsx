@@ -190,7 +190,7 @@ export default function ClientOnboardingForm({ onBack }: ClientOnboardingFormPro
 
     if (submitted) {
         return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-white flex items-center justify-center p-4">
                 <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center animate-in fade-in zoom-in duration-300">
                     <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                         <CheckCircle2 size={40} className="text-green-600" />
@@ -249,7 +249,7 @@ export default function ClientOnboardingForm({ onBack }: ClientOnboardingFormPro
         }`;
 
     return (
-        <div className="bg-slate-50 font-sans text-slate-900 flex flex-col">
+        <div className="bg-white font-sans text-slate-900 flex flex-col">
 
             {/* Confirmation Modal */}
             {isConfirmOpen && (
