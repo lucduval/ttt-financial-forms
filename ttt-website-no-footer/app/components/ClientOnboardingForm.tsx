@@ -195,25 +195,26 @@ export default function ClientOnboardingForm({ onBack }: ClientOnboardingFormPro
                     <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                         <CheckCircle2 size={40} className="text-green-600" />
                     </div>
-                    <h2 className="text-2xl font-bold text-slate-800 mb-2">Submission Received</h2>
-                    <p className="text-slate-600 mb-8">
-                        Thank you for providing your details. Our team will review your information and be in touch shortly to finalize the onboarding process.
+                    <h2 className="text-2xl font-bold text-slate-800 mb-2">Thank You!</h2>
+                    <p className="text-slate-600 mb-2">
+                        Your application has been successfully submitted.
+                    </p>
+                    <p className="text-slate-500 text-sm mb-8">
+                        Our accounting team will review your information and be in touch shortly to finalize the onboarding process. You will receive a confirmation email at <span className="font-medium text-slate-700">{formData.email}</span>.
                     </p>
                     <div className="space-y-3">
                         <button
-                            onClick={() => { setSubmitted(false); setCurrentStep(1); setLeadCreated(false); }}
+                            onClick={() => { setSubmitted(false); setCurrentStep(1); setLeadCreated(false); setBackgroundLeadId(null); setFormData({ clientType: '', companyName: '', fullName: '', email: '', phone: '', notes: '', retainerNotes: '', services: { companyRegistration: false, vatRegistration: false, payeRegistration: false, publicOfficesRegistration: false, financialStatements: false, otherRegistration: false, otherRegistrationDescription: '', fullAccountingRetainer: false, managementAccountsQuarterly: false, finalYearEndAccounts: false, companyTaxReturn: false, companyProvisionalReturn: false, personalTaxReturns: false, personalProvisionalReturn: false, cipcAnnualReturn: false }, files: [] }); }}
                             className="w-full py-3 px-4 bg-[#0077BB] hover:bg-[#0066a1] text-white rounded-lg font-medium transition-colors shadow-lg shadow-blue-900/20"
                         >
-                            Submit Another Client
+                            Submit Another Application
                         </button>
-                        {onBack && (
-                            <button
-                                onClick={onBack}
-                                className="w-full py-3 px-4 text-slate-600 hover:text-slate-900 font-medium transition-colors"
-                            >
-                                Back to Services
-                            </button>
-                        )}
+                        <a
+                            href="https://ttt-tax.co.za"
+                            className="block w-full py-3 px-4 text-slate-600 hover:text-slate-900 font-medium transition-colors border border-slate-200 rounded-lg hover:bg-slate-50"
+                        >
+                            Go to Homepage
+                        </a>
                     </div>
                 </div>
             </div>

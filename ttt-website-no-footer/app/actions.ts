@@ -227,6 +227,12 @@ export async function submitTargetData(data: FormSubmitData, serviceType: string
             return { success: true, simulated: true };
         }
 
+        // Assign lead to accounting team if configured
+        const teamId = process.env.DYNAMICS_OWNER_TEAM_ID;
+        if (teamId) {
+            leadData["ownerid@odata.bind"] = `/teams(${teamId})`;
+        }
+
         let dynamicsId: string | null = null;
 
         if (options?.existingLeadId) {
