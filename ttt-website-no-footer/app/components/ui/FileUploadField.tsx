@@ -64,7 +64,7 @@ const FileUploadField: React.FC<FileUploadFieldProps> = ({ label, id, onFileSele
                             <FileCheck size={20} />
                         </div>
                         <div className="text-left">
-                            <p className="text-sm font-medium text-slate-800 truncate max-w-[150px]">{fileName}</p>
+                            <p className="text-xs sm:text-sm font-medium text-slate-800 truncate max-w-[120px] sm:max-w-[150px]">{fileName}</p>
                             <p className="text-xs text-green-600">Ready to upload</p>
                         </div>
                     </div>

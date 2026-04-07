@@ -135,8 +135,8 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
             <main className="flex-grow max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
                 <form onSubmit={handleSubmit} className="relative">
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div className="bg-slate-50 px-6 py-4 border-b border-slate-200">
-                            <h3 className="text-xl font-semibold text-slate-800 capitalize">Get Started with {serviceType}</h3>
+                        <div className="bg-slate-50 px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200">
+                            <h3 className="text-lg sm:text-xl font-semibold text-slate-800 capitalize">Get Started with {serviceType}</h3>
                             <p className="text-sm text-slate-500 mt-1">Please fill in your details below.</p>
                         </div>
 
@@ -265,12 +265,12 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
                             </div>
                         </div>
 
-                        <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                        <div className="px-4 sm:px-6 py-4 bg-slate-50 border-t border-slate-200 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3">
                             {onBack && (
                                 <button
                                     type="button"
                                     onClick={onBack}
-                                    className="px-4 py-2 text-slate-600 font-medium hover:text-slate-900 transition-colors flex items-center gap-2"
+                                    className="px-4 py-2.5 text-slate-600 font-medium hover:text-slate-900 transition-colors flex items-center justify-center gap-2 min-h-[44px]"
                                 >
                                     <ChevronLeft size={18} />
                                     Back
@@ -278,7 +278,7 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
                             )}
                             <button
                                 type="submit"
-                                className="px-6 py-2.5 bg-[#0077BB] hover:bg-[#0066a1] text-white font-semibold rounded-lg shadow-lg shadow-blue-900/20 hover:shadow-xl hover:shadow-blue-900/30 transition-all transform hover:-translate-y-0.5 flex items-center gap-2 ml-auto"
+                                className="px-6 py-2.5 bg-[#0077BB] hover:bg-[#0066a1] text-white font-semibold rounded-lg shadow-lg shadow-blue-900/20 hover:shadow-xl hover:shadow-blue-900/30 transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-2 ml-auto min-h-[44px] w-full sm:w-auto"
                             >
                                 <Send size={18} />
                                 {loading ? 'Submitting...' : 'Submit Inquiry'}

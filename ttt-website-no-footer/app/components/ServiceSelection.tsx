@@ -57,7 +57,7 @@ export default function ServiceSelection({ onSelect, hideHeader }: ServiceSelect
                 </>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-4xl w-full">
                 {services.map((service) => (
                     <button
                         key={service.id}

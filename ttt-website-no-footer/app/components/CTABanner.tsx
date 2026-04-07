@@ -54,7 +54,7 @@ export default function CTABanner({
             <Link
               key={btn.label}
               href={btn.href}
-              className={`inline-flex items-center gap-2 px-8 py-3.5 text-sm font-semibold rounded-full transition-all hover:-translate-y-0.5 transform ${
+              className={`inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 text-sm font-semibold rounded-full transition-all hover:-translate-y-0.5 transform w-full sm:w-auto ${
                 btn.variant === "outline"
                   ? "border border-white/40 text-white hover:bg-white/10"
                   : "bg-[#E8872E] hover:bg-[#d4771f] text-white shadow-lg shadow-black/20"

@@ -257,12 +257,12 @@ export default function ClientOnboardingForm({ onBack }: ClientOnboardingFormPro
             {isConfirmOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
-                        <div className="bg-gradient-to-r from-[#0077BB] to-[#0168A2] px-6 py-5 text-white">
+                        <div className="bg-gradient-to-r from-[#0077BB] to-[#0168A2] px-4 sm:px-6 py-5 text-white">
                             <h3 className="text-xl font-bold">Confirm Your Submission</h3>
                             <p className="text-blue-100 text-sm mt-1">Please review your details before submitting.</p>
                         </div>
-                        <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
-                            <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div className="p-4 sm:p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                                 <div>
                                     <p className="text-slate-400 text-xs uppercase tracking-wide font-semibold mb-0.5">Client Type</p>
                                     <p className="text-slate-800 font-medium">
@@ -314,11 +314,11 @@ export default function ClientOnboardingForm({ onBack }: ClientOnboardingFormPro
                                 </div>
                             )}
                         </div>
-                        <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex gap-3 justify-end">
+                        <div className="px-4 sm:px-6 py-4 bg-slate-50 border-t border-slate-200 flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
                             <button
                                 type="button"
                                 onClick={() => setIsConfirmOpen(false)}
-                                className="px-5 py-2.5 text-slate-600 font-medium hover:text-slate-900 hover:bg-slate-200 rounded-lg transition-colors"
+                                className="px-5 py-2.5 text-slate-600 font-medium hover:text-slate-900 hover:bg-slate-200 rounded-lg transition-colors text-center"
                             >
                                 Go Back & Edit
                             </button>
@@ -326,7 +326,7 @@ export default function ClientOnboardingForm({ onBack }: ClientOnboardingFormPro
                                 type="button"
                                 onClick={doSubmit}
                                 disabled={loading}
-                                className="px-6 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-semibold rounded-lg shadow-lg transition-all flex items-center gap-2"
+                                className="px-6 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-semibold rounded-lg shadow-lg transition-all flex items-center justify-center gap-2"
                             >
                                 <Send size={16} />
                                 {loading ? 'Submitting...' : 'Confirm & Submit'}
@@ -355,8 +355,8 @@ export default function ClientOnboardingForm({ onBack }: ClientOnboardingFormPro
                 {/* Progress Bar */}
                 <div className="mb-8">
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-semibold text-[#0077BB]">Step {currentStep} of {totalSteps}</span>
-                        <span className="text-sm text-slate-500">{steps[currentStep - 1].title}</span>
+                        <span className="text-xs sm:text-sm font-semibold text-[#0077BB]">Step {currentStep} of {totalSteps}</span>
+                        <span className="text-xs sm:text-sm text-slate-500">{steps[currentStep - 1].title}</span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-2.5">
                         <div
@@ -392,7 +392,7 @@ export default function ClientOnboardingForm({ onBack }: ClientOnboardingFormPro
                 <form onSubmit={(e) => e.preventDefault()} className="relative">
 
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden min-h-[400px] flex flex-col">
-                        <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center gap-3">
+                        <div className="bg-slate-50 px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 flex items-center gap-3">
                             <CurrentStepIcon className="text-[#0077BB]" size={20} />
                             <h3 className="text-lg font-semibold text-slate-800">{steps[currentStep - 1].title}</h3>
                         </div>
@@ -484,7 +484,7 @@ export default function ClientOnboardingForm({ onBack }: ClientOnboardingFormPro
                                     <p className="text-sm text-slate-500 mb-4">Select the services you are interested in.</p>
 
                                     {/* Tab Navigation */}
-                                    <div className="flex gap-2 mb-6 bg-slate-100 p-1 rounded-lg">
+                                    <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 mb-6 bg-slate-100 p-1 rounded-lg">
                                         <button type="button" onClick={() => setActiveServiceTab('registrations')} className={serviceTabClasses('registrations')}>
                                             Registrations
                                         </button>
@@ -620,12 +620,12 @@ export default function ClientOnboardingForm({ onBack }: ClientOnboardingFormPro
                     </div>
 
                     {/* Actions / Navigation Buttons */}
-                    <div className="flex items-center justify-between pt-8 pb-12">
+                    <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-8 pb-12">
 
                         <button
                             type="button"
                             onClick={currentStep === 1 ? onBack : prevStep}
-                            className={`px-6 py-3 text-slate-600 font-medium hover:text-slate-900 hover:bg-slate-200 rounded-lg transition-colors flex items-center gap-2 ${currentStep === 1 && !onBack ? 'invisible' : ''}`}
+                            className={`px-6 py-3 text-slate-600 font-medium hover:text-slate-900 hover:bg-slate-200 rounded-lg transition-colors flex items-center justify-center gap-2 min-h-[44px] ${currentStep === 1 && !onBack ? 'invisible' : ''}`}
                         >
                             <ChevronLeft size={18} />
                             {currentStep === 1 ? 'Back to Services' : 'Back'}
@@ -637,7 +637,7 @@ export default function ClientOnboardingForm({ onBack }: ClientOnboardingFormPro
                                     type="button"
                                     onClick={nextStep}
                                     disabled={currentStep === 1 && !isStep1Valid()}
-                                    className="px-8 py-3 bg-[#0077BB] hover:bg-[#0066a1] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 text-white font-semibold rounded-lg shadow-lg shadow-blue-900/20 hover:shadow-xl hover:shadow-blue-900/30 transition-all transform hover:-translate-y-0.5 flex items-center gap-2"
+                                    className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-[#0077BB] hover:bg-[#0066a1] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 text-white font-semibold rounded-lg shadow-lg shadow-blue-900/20 hover:shadow-xl hover:shadow-blue-900/30 transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-2 min-h-[44px]"
                                 >
                                     Next Step
                                     <ChevronRight size={18} />
@@ -646,7 +646,7 @@ export default function ClientOnboardingForm({ onBack }: ClientOnboardingFormPro
                                 <button
                                     type="button"
                                     onClick={() => setIsConfirmOpen(true)}
-                                    className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg shadow-green-900/20 hover:shadow-xl hover:shadow-green-900/30 transition-all transform hover:-translate-y-0.5 flex items-center gap-2"
+                                    className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg shadow-green-900/20 hover:shadow-xl hover:shadow-green-900/30 transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-2 min-h-[44px]"
                                 >
                                     <Send size={18} />
                                     Review & Submit

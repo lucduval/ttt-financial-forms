@@ -153,7 +153,7 @@ export default function ContactForm({
         <button
           type="submit"
           disabled={status === "loading"}
-          className={`inline-flex items-center gap-2 px-8 py-3 font-semibold text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed hover:-translate-y-0.5 transform ${
+          className={`inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 font-semibold text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed hover:-translate-y-0.5 transform w-full sm:w-auto ${
             isDark
               ? "border-2 border-white text-white hover:bg-white hover:text-[#0077BB] rounded-sm tracking-widest text-xs uppercase"
               : "bg-[#0077BB] hover:bg-[#0168A2] text-white shadow-lg shadow-blue-900/20 rounded-full"
