@@ -8,12 +8,56 @@ export interface EmailData {
     notes?: string;
     clientType?: number;
     services?: Record<string, boolean | string | undefined>;
+    industryName?: string;
 }
 
 export interface ConsultationData {
     date: string;
     time: string;
     accountant: string;
+}
+
+export interface ServiceBranding {
+    brandName: string;
+    serviceLabel: string;
+    replyEmail: string;
+    phone: string;
+    roleTerm: string;
+}
+
+const SERVICE_BRANDING: Record<string, ServiceBranding> = {
+    tax: {
+        brandName: "TTT Tax Services",
+        serviceLabel: "tax services",
+        replyEmail: "admin@ttt-tax.co.za",
+        phone: "010 442 9222",
+        roleTerm: "Designated Accountant",
+    },
+    insurance: {
+        brandName: "TTT Financial Group",
+        serviceLabel: "insurance services",
+        replyEmail: "admin@ttt-insurance.co.za",
+        phone: "010 442 9222",
+        roleTerm: "Insurance Advisor",
+    },
+    advisory: {
+        brandName: "TTT Financial Group",
+        serviceLabel: "financial advisory services",
+        replyEmail: "admin@ttt-finance.co.za",
+        phone: "010 442 9222",
+        roleTerm: "Financial Advisor",
+    },
+    accounting: {
+        brandName: "TTT Adaptive Accounting",
+        serviceLabel: "accounting services",
+        replyEmail: "registrations@ttt-tax.co.za",
+        phone: "010 442 9222",
+        roleTerm: "Designated Accountant",
+    },
+};
+
+export function getServiceBranding(serviceType: string): ServiceBranding {
+    return SERVICE_BRANDING[serviceType.toLowerCase()] || SERVICE_BRANDING.accounting;
 }
 
 const CLIENT_TYPE_LABELS: Record<number, string> = {
@@ -87,6 +131,13 @@ export function buildTeamNotificationHtml(data: EmailData, serviceType: string, 
             </tr>`;
     }
 
+    const industryHtml = data.industryName
+        ? `<tr>
+                <td style="padding: 8px 12px; border-bottom: 1px solid #eee; color: #555; font-weight: 600;">Industry</td>
+                <td style="padding: 8px 12px; border-bottom: 1px solid #eee;">${data.industryName}</td>
+            </tr>`
+        : "";
+
     const notesContent = data.notes || data.message || "N/A";
 
     return `
@@ -123,7 +174,7 @@ export function buildTeamNotificationHtml(data: EmailData, serviceType: string, 
                                 <tr>
                                     <td style="padding: 8px 12px; border-bottom: 1px solid #eee; color: #555; font-weight: 600;">Client Type</td>
                                     <td style="padding: 8px 12px; border-bottom: 1px solid #eee;">${clientTypeLabel}</td>
-                                </tr>${companyHtml}${servicesHtml}
+                                </tr>${companyHtml}${industryHtml}${servicesHtml}
                                 <tr>
                                     <td style="padding: 8px 12px; border-bottom: 1px solid #eee; color: #555; font-weight: 600;">Notes</td>
                                     <td style="padding: 8px 12px; border-bottom: 1px solid #eee;">${notesContent}</td>
@@ -155,6 +206,7 @@ export function buildClientThankYouHtml(
     const firstName = clientName.split(" ")[0];
     footerImageUrl = footerImageUrl || process.env.EMAIL_FOOTER_IMAGE_URL || "";
     const logoUrl = process.env.EMAIL_LOGO_URL || "";
+    const branding = getServiceBranding(serviceType);
 
     let consultationSection: string;
     if (consultation) {
@@ -165,15 +217,15 @@ export function buildClientThankYouHtml(
                 <tr><td style="padding: 16px 20px; font-size: 14px; color: #333;">
                     <strong>Date:</strong> ${consultation.date}<br>
                     <strong>Time:</strong> ${consultation.time}<br>
-                    <strong>Designated Accountant:</strong> ${consultation.accountant}
+                    <strong>${branding.roleTerm}:</strong> ${consultation.accountant}
                 </td></tr>
             </table>
             <p style="margin: 0 0 16px;">We are looking forward to meeting you.</p>
-            <p style="margin: 0 0 16px;">Should you have any questions after this consultation, please feel free to contact your Designated Accountant.</p>`;
+            <p style="margin: 0 0 16px;">Should you have any questions after this consultation, please feel free to contact your ${branding.roleTerm}.</p>`;
     } else {
         consultationSection = `
             <p style="margin: 0 0 16px;">Please note that we will be in contact with you as soon as possible to continue this process.</p>
-            <p style="margin: 0 0 16px;">Should you have any questions, please share these questions with your Designated Accountant.</p>`;
+            <p style="margin: 0 0 16px;">Should you have any questions, please share these questions with your ${branding.roleTerm}.</p>`;
     }
 
     return `
@@ -188,19 +240,19 @@ export function buildClientThankYouHtml(
                     <tr>
                         <td style="background-color: #0077BB; padding: 24px 32px;">
                             ${logoUrl ? `<img src="${logoUrl}" alt="TTT Logo" height="40" style="display: block; height: 40px; width: auto; margin-bottom: 12px;" />` : ""}
-                            <h1 style="margin: 0; color: #ffffff; font-size: 20px;">TTT Adaptive Accounting</h1>
+                            <h1 style="margin: 0; color: #ffffff; font-size: 20px;">${branding.brandName}</h1>
                         </td>
                     </tr>
                     <tr>
                         <td style="padding: 32px;">
                             <p style="margin: 0 0 16px; font-size: 14px; color: #333;">Dear ${firstName},</p>
-                            <p style="margin: 0 0 16px; font-size: 14px; color: #333;">Thank you for your interest in TTT Adaptive Accounting. We have received your introduction form and we are currently busy processing your information. We strive to provide accurate and timely information and services.</p>
+                            <p style="margin: 0 0 16px; font-size: 14px; color: #333;">Thank you for your interest in our ${branding.serviceLabel}. We have received your introduction form and we are currently busy processing your information. We strive to provide accurate and timely information and services.</p>
                             <div style="font-size: 14px; color: #333;">
                                 ${consultationSection}
                             </div>
                             <p style="margin: 24px 0 4px; font-size: 14px; color: #333;">Kind Regards,</p>
-                            <p style="margin: 0 0 4px; font-size: 14px; color: #333; font-weight: 600;">TTT Adaptive Accounting</p>
-                            <p style="margin: 0; font-size: 13px; color: #555;">Tel: 010 442 9222 | Email: <a href="mailto:registrations@ttt-tax.co.za" style="color: #0077BB;">registrations@ttt-tax.co.za</a></p>
+                            <p style="margin: 0 0 4px; font-size: 14px; color: #333; font-weight: 600;">${branding.brandName}</p>
+                            <p style="margin: 0; font-size: 13px; color: #555;">Tel: ${branding.phone} | Email: <a href="mailto:${branding.replyEmail}" style="color: #0077BB;">${branding.replyEmail}</a></p>
                         </td>
                     </tr>
                     ${footerImageUrl ? `<tr>

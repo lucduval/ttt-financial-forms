@@ -3,6 +3,7 @@
 import {
     buildTeamNotificationHtml,
     buildClientThankYouHtml,
+    getServiceBranding,
     type EmailData,
     type ConsultationData,
 } from "./email-templates";
@@ -43,7 +44,8 @@ async function getGraphAccessToken(): Promise<string> {
 async function sendEmail(
     to: string | string[],
     subject: string,
-    htmlBody: string
+    htmlBody: string,
+    replyTo?: string
 ): Promise<void> {
     const senderAddress = process.env.EMAIL_SENDER_ADDRESS;
     if (!senderAddress) {
@@ -56,6 +58,15 @@ async function sendEmail(
 
     const token = await getGraphAccessToken();
 
+    const message: Record<string, unknown> = {
+        subject,
+        body: { contentType: "HTML", content: htmlBody },
+        toRecipients: recipients,
+    };
+    if (replyTo) {
+        message.replyTo = [{ emailAddress: { address: replyTo } }];
+    }
+
     const response = await fetch(
         `https://graph.microsoft.com/v1.0/users/${senderAddress}/sendMail`,
         {
@@ -65,11 +76,7 @@ async function sendEmail(
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                message: {
-                    subject,
-                    body: { contentType: "HTML", content: htmlBody },
-                    toRecipients: recipients,
-                },
+                message,
                 saveToSentItems: false,
             }),
         }
@@ -87,9 +94,14 @@ export async function sendTeamNotificationEmail(
     serviceType: string,
     dynamicsId?: string | null
 ): Promise<void> {
-    const teamAddresses = process.env.EMAIL_TEAM_ADDRESSES;
+    const serviceEnv: Record<string, string | undefined> = {
+        tax: process.env.EMAIL_TAX_ADDRESSES,
+        insurance: process.env.EMAIL_INSURANCE_ADDRESSES,
+        advisory: process.env.EMAIL_ADVISORY_ADDRESSES,
+    };
+    const teamAddresses = serviceEnv[serviceType] || process.env.EMAIL_TEAM_ADDRESSES;
     if (!teamAddresses) {
-        console.warn("EMAIL_TEAM_ADDRESSES not set — skipping team notification.");
+        console.warn(`No recipient list set for service "${serviceType}" — skipping team notification.`);
         return;
     }
 
@@ -100,7 +112,7 @@ export async function sendTeamNotificationEmail(
     const subject = `New ${serviceType.charAt(0).toUpperCase() + serviceType.slice(1)} Lead — ${clientName}`;
     const html = buildTeamNotificationHtml(data, serviceType, dynamicsId);
 
-    await sendEmail(recipients, subject, html);
+    await sendEmail(recipients, subject, html, data.email);
 }
 
 export async function sendClientThankYouEmail(
@@ -113,8 +125,9 @@ export async function sendClientThankYouEmail(
         return;
     }
 
-    const subject = "TTT Adaptive Accounting — Thank You for Your Submission";
+    const branding = getServiceBranding(serviceType);
+    const subject = `${branding.brandName} — Thank You for Your Submission`;
     const html = buildClientThankYouHtml(data, serviceType, consultation);
 
-    await sendEmail(data.email, subject, html);
+    await sendEmail(data.email, subject, html, branding.replyEmail);
 }

@@ -58,6 +58,7 @@ interface FormSubmitData {
     taxNumber?: string;
     idNumber?: string;
     industry?: string;
+    industryName?: string;
     notes?: string;
     contactPerson?: string;
     email: string;
@@ -227,10 +228,20 @@ export async function submitTargetData(data: FormSubmitData, serviceType: string
             return { success: true, simulated: true };
         }
 
-        // Assign lead to accounting team if configured
-        const teamId = process.env.DYNAMICS_OWNER_TEAM_ID;
-        if (teamId) {
-            leadData["ownerid@odata.bind"] = `/teams(${teamId})`;
+        // Assign lead owner based on service type
+        const serviceOwnerEnv: Record<string, string | undefined> = {
+            tax: process.env.DYNAMICS_TAX_OWNER_ID,
+            insurance: process.env.DYNAMICS_INSURANCE_OWNER_ID,
+            advisory: process.env.DYNAMICS_ADVISORY_OWNER_ID,
+        };
+        const serviceOwnerId = serviceOwnerEnv[serviceType];
+        if (serviceOwnerId) {
+            leadData["ownerid@odata.bind"] = `/systemusers(${serviceOwnerId})`;
+        } else {
+            const teamId = process.env.DYNAMICS_OWNER_TEAM_ID;
+            if (teamId) {
+                leadData["ownerid@odata.bind"] = `/teams(${teamId})`;
+            }
         }
 
         let dynamicsId: string | null = null;

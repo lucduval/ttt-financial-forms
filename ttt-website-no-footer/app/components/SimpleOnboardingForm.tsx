@@ -10,8 +10,6 @@ import {
     CheckCircle2,
     Calendar,
     ChevronLeft,
-    Fingerprint,
-    FileText,
     Briefcase
 } from 'lucide-react';
 import { PopupModal } from 'react-calendly';
@@ -46,8 +44,6 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
         name: '',
         email: '',
         phone: '',
-        idNumber: '',
-        taxNumber: '',
         industry: '',
         message: '',
         files: [] as { name: string, content: string, type: string }[]
@@ -62,14 +58,16 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
         e.preventDefault();
         setLoading(true);
         try {
+            const selectedIndustryName = formData.industry
+                ? industries.find((i) => i.id === formData.industry)?.name
+                : undefined;
             await submitTargetData({
                 ...formData,
                 clientType: formData.clientType ? parseInt(formData.clientType) : undefined,
                 name: formData.name || undefined,
                 message: formData.message || undefined,
-                idNumber: formData.idNumber || undefined,
-                taxNumber: formData.taxNumber || undefined,
                 industry: formData.industry || undefined,
+                industryName: selectedIndustryName,
                 files: formData.files
             }, serviceType);
             setSubmitted(true);
@@ -98,7 +96,7 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
                     </p>
                     <div className="space-y-3">
                         <button
-                            onClick={() => { setSubmitted(false); setFormData({ clientType: '', name: '', email: '', phone: '', idNumber: '', taxNumber: '', industry: '', message: '', files: [] }); }}
+                            onClick={() => { setSubmitted(false); setFormData({ clientType: '', name: '', email: '', phone: '', industry: '', message: '', files: [] }); }}
                             className="w-full py-3 px-4 bg-[#0077BB] hover:bg-[#0066a1] text-white rounded-lg font-medium transition-colors shadow-lg shadow-blue-900/20"
                         >
                             Submit Another Application
@@ -198,49 +196,29 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
                             />
 
                             {serviceType === 'tax' && (
-                                <>
-                                    <FormInput
-                                        label="ID Number"
-                                        id="idNumber"
-                                        value={formData.idNumber}
-                                        onChange={handleInputChange}
-                                        placeholder="e.g. 9001015009087"
-                                        required
-                                        icon={Fingerprint}
-                                    />
-                                    <FormInput
-                                        label="Tax Number"
-                                        id="taxNumber"
-                                        value={formData.taxNumber}
-                                        onChange={handleInputChange}
-                                        placeholder="e.g. 0123456789"
-                                        required
-                                        icon={FileText}
-                                    />
-                                    <div>
-                                        <label htmlFor="industry" className="block text-sm font-medium text-slate-700 mb-2">
-                                            Industry
-                                        </label>
-                                        <div className="relative">
-                                            <div className="absolute top-3 left-3 pointer-events-none text-slate-400">
-                                                <Briefcase size={18} />
-                                            </div>
-                                            <select
-                                                id="industry"
-                                                name="industry"
-                                                value={formData.industry}
-                                                onChange={handleInputChange}
-                                                className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0077BB] focus:border-[#0077BB] transition-colors bg-slate-50 focus:bg-white text-slate-900 sm:text-sm shadow-sm appearance-none"
-                                                required
-                                            >
-                                                <option value="" disabled>Select your industry</option>
-                                                {industries.map((ind: { id: string; name: string }) => (
-                                                    <option key={ind.id} value={ind.id}>{ind.name}</option>
-                                                ))}
-                                            </select>
+                                <div>
+                                    <label htmlFor="industry" className="block text-sm font-medium text-slate-700 mb-2">
+                                        Industry
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute top-3 left-3 pointer-events-none text-slate-400">
+                                            <Briefcase size={18} />
                                         </div>
+                                        <select
+                                            id="industry"
+                                            name="industry"
+                                            value={formData.industry}
+                                            onChange={handleInputChange}
+                                            className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0077BB] focus:border-[#0077BB] transition-colors bg-slate-50 focus:bg-white text-slate-900 sm:text-sm shadow-sm appearance-none"
+                                            required
+                                        >
+                                            <option value="" disabled>Select your industry</option>
+                                            {industries.map((ind: { id: string; name: string }) => (
+                                                <option key={ind.id} value={ind.id}>{ind.name}</option>
+                                            ))}
+                                        </select>
                                     </div>
-                                </>
+                                </div>
                             )}
 
                             <div>
