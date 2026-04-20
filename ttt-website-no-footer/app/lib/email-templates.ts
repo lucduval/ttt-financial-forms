@@ -220,12 +220,10 @@ export function buildClientThankYouHtml(
                     <strong>${branding.roleTerm}:</strong> ${consultation.accountant}
                 </td></tr>
             </table>
-            <p style="margin: 0 0 16px;">We are looking forward to meeting you.</p>
-            <p style="margin: 0 0 16px;">Should you have any questions after this consultation, please feel free to contact your ${branding.roleTerm}.</p>`;
+            <p style="margin: 0 0 16px;">We are looking forward to meeting you.</p>`;
     } else {
         consultationSection = `
-            <p style="margin: 0 0 16px;">Please note that we will be in contact with you as soon as possible to continue this process.</p>
-            <p style="margin: 0 0 16px;">Should you have any questions, please share these questions with your ${branding.roleTerm}.</p>`;
+            <p style="margin: 0 0 16px;">Please note that we will be in contact with you as soon as possible to continue this process.</p>`;
     }
 
     return `
