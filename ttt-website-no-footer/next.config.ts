@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "25mb",
     },
   },
+  outputFileTracingIncludes: {
+    "/**": ["./public/attachments/**/*"],
+  },
   async headers() {
     return [
       {

@@ -53,7 +53,8 @@ Reply-To: the client's email.
 
 **Client thank-you:**
 Subject: `TTT Tax Services — Thank You for Your Submission`
-Branded as **TTT Tax Services**. Body references "our tax services". Contact line: `Tel: 010 442 9222 | Email: admin@ttt-tax.co.za`. Role term: "Designated Accountant". Reply-To: admin@ttt-tax.co.za.
+Branded as **TTT Tax Services**. Body references "our tax services". Contact line: `Tel: 010 442 9222 | Email: admin@ttt-tax.co.za`. Reply-To: admin@ttt-tax.co.za.
+**Attachment:** `TTT - Tax Services - Letter of Engagement.pdf` (sourced from [public/attachments/tax-letter-of-engagement.pdf](public/attachments/tax-letter-of-engagement.pdf); additional service attachments can be added via `SERVICE_ATTACHMENTS` in [app/lib/email.ts](app/lib/email.ts)).
 
 ---
 

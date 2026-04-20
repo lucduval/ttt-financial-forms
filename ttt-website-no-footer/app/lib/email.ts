@@ -1,5 +1,7 @@
 "use server";
 
+import { readFile } from "fs/promises";
+import path from "path";
 import {
     buildTeamNotificationHtml,
     buildClientThankYouHtml,
@@ -7,6 +9,42 @@ import {
     type EmailData,
     type ConsultationData,
 } from "./email-templates";
+
+interface EmailAttachment {
+    name: string;
+    contentType: string;
+    contentBytes: string;
+}
+
+interface AttachmentSpec {
+    name: string;
+    filePath: string;
+    contentType: string;
+}
+
+const SERVICE_ATTACHMENTS: Record<string, AttachmentSpec[]> = {
+    tax: [
+        {
+            name: "TTT - Tax Services - Letter of Engagement.pdf",
+            filePath: path.join(process.cwd(), "public", "attachments", "tax-letter-of-engagement.pdf"),
+            contentType: "application/pdf",
+        },
+    ],
+};
+
+async function loadServiceAttachments(serviceType: string): Promise<EmailAttachment[]> {
+    const specs = SERVICE_ATTACHMENTS[serviceType.toLowerCase()];
+    if (!specs || specs.length === 0) return [];
+
+    return Promise.all(specs.map(async (spec) => {
+        const buffer = await readFile(spec.filePath);
+        return {
+            name: spec.name,
+            contentType: spec.contentType,
+            contentBytes: buffer.toString("base64"),
+        };
+    }));
+}
 
 async function getGraphAccessToken(): Promise<string> {
     const tenantId = process.env.DYNAMICS_TENANT_ID;
@@ -45,7 +83,8 @@ async function sendEmail(
     to: string | string[],
     subject: string,
     htmlBody: string,
-    replyTo?: string
+    replyTo?: string,
+    attachments?: EmailAttachment[]
 ): Promise<void> {
     const senderAddress = process.env.EMAIL_SENDER_ADDRESS;
     if (!senderAddress) {
@@ -65,6 +104,14 @@ async function sendEmail(
     };
     if (replyTo) {
         message.replyTo = [{ emailAddress: { address: replyTo } }];
+    }
+    if (attachments && attachments.length > 0) {
+        message.attachments = attachments.map((att) => ({
+            "@odata.type": "#microsoft.graph.fileAttachment",
+            name: att.name,
+            contentType: att.contentType,
+            contentBytes: att.contentBytes,
+        }));
     }
 
     const response = await fetch(
@@ -129,5 +176,12 @@ export async function sendClientThankYouEmail(
     const subject = `${branding.brandName} — Thank You for Your Submission`;
     const html = buildClientThankYouHtml(data, serviceType, consultation);
 
-    await sendEmail(data.email, subject, html, branding.replyEmail);
+    let attachments: EmailAttachment[] = [];
+    try {
+        attachments = await loadServiceAttachments(serviceType);
+    } catch (err) {
+        console.error(`Failed to load attachments for service "${serviceType}":`, err);
+    }
+
+    await sendEmail(data.email, subject, html, branding.replyEmail, attachments);
 }
