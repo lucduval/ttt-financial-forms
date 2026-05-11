@@ -148,6 +148,47 @@ export async function updateRecord(entityCollection: string, id: string, data: R
     }
 }
 
+export async function uploadFileColumn(
+    entityCollection: string,
+    id: string,
+    fieldName: string,
+    fileBytes: Uint8Array,
+    fileName: string
+) {
+    const resource = process.env.DYNAMICS_RESOURCE_URL;
+    if (!resource) {
+        throw new Error("Missing Dynamics resource URL.");
+    }
+
+    const baseUrl = resource.endsWith('/') ? resource.slice(0, -1) : resource;
+    const apiUrl = `${baseUrl}/api/data/v9.2/${entityCollection}(${id})/${fieldName}`;
+
+    try {
+        const token = await getAccessToken();
+
+        const response = await fetch(apiUrl, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/octet-stream',
+                'x-ms-file-name': fileName,
+            },
+            body: Buffer.from(fileBytes),
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Error uploading file column ${entityCollection}/${fieldName}:`, response.status, errorText);
+            throw new Error(`Failed to upload file column: ${response.statusText} - ${errorText}`);
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error("Error in uploadFileColumn:", error);
+        throw error;
+    }
+}
+
 export async function getRecords(entityCollection: string, query: string = ""): Promise<{ success: boolean; value?: any[] }> {
     const resource = process.env.DYNAMICS_RESOURCE_URL;
     if (!resource) {

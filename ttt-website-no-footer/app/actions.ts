@@ -1,7 +1,16 @@
 "use server";
 
-import { createRecord, updateRecord, getRecords } from "./lib/dynamics";
-import { sendTeamNotificationEmail, sendClientThankYouEmail } from "./lib/email";
+import { headers } from "next/headers";
+import { createRecord, updateRecord, getRecords, uploadFileColumn } from "./lib/dynamics";
+import { sendTeamNotificationEmail, sendClientThankYouEmail, sendSignedLoeEmails } from "./lib/email";
+import { mintLoeToken, verifyLoeToken } from "./lib/loe-token";
+import {
+    buildReferenceId,
+    buildSignedLoePdf,
+    loadLoeSourceBytes,
+    type SignatureMetadata,
+} from "./lib/loe-pdf";
+import { LOE_DOCUMENT_VERSION } from "./components/LoeTermsContent";
 
 export async function getIndustries() {
     try {
@@ -75,6 +84,7 @@ interface FormSubmitData {
     hasExistingAccountant?: string;
     referralSource?: string;
     referrerName?: string;
+    referralCode?: string;
     services?: {
         // Legacy fields
         bookkeeping?: boolean;
@@ -203,6 +213,9 @@ export async function submitTargetData(data: FormSubmitData, serviceType: string
         };
     } else {
         description += `Message: ${data.message || 'N/A'}`;
+        if (data.referralCode) {
+            description += `\nReferral Code: ${data.referralCode}`;
+        }
 
         const nameParts = data.name?.trim().split(' ') || ['Unknown'];
         const firstName = nameParts[0];
@@ -220,6 +233,28 @@ export async function submitTargetData(data: FormSubmitData, serviceType: string
             riivo_leadsource,
             ...(_riivo_industry_lookup_value && { "riivo_Industry_lookup@odata.bind": `/riivo_industries(${_riivo_industry_lookup_value})` })
         };
+
+        if (st === 'tax' && data.referralCode) {
+            const code = data.referralCode.trim();
+            if (code) {
+                try {
+                    const escaped = code.replace(/'/g, "''");
+                    const lookup = await getRecords(
+                        'contacts',
+                        `?$select=contactid&$filter=riivo_referralcode eq '${escaped}'&$top=1`
+                    );
+                    const referrerId = lookup.success && lookup.value && lookup.value[0]?.contactid;
+                    if (referrerId) {
+                        leadData["riivo_Referrer@odata.bind"] = `/contacts(${referrerId})`;
+                        leadData["riivo_validreferral"] = true;
+                    } else {
+                        console.log(`Referral code "${code}" did not match any contact.`);
+                    }
+                } catch (err) {
+                    console.error("Referral code lookup failed:", err);
+                }
+            }
+        }
     }
 
     try {
@@ -290,10 +325,250 @@ export async function submitTargetData(data: FormSubmitData, serviceType: string
             }
         }
 
-        return { success: true, dynamicsId: dynamicsId };
+        let loeToken: string | null = null;
+        if (dynamicsId && st === 'tax' && process.env.LOE_SIGNING_SECRET) {
+            try {
+                loeToken = mintLoeToken(dynamicsId);
+            } catch (tokenError) {
+                console.error("Failed to mint LoE signing token:", tokenError);
+            }
+        }
+
+        return { success: true, dynamicsId: dynamicsId, loeToken };
 
     } catch (error: any) {
         console.error("Failed to submit to Dynamics:", error);
         throw new Error(`Failed to submit to Dynamics CRM: ${error.message}`);
     }
+}
+
+interface SignLoeInput {
+    leadId: string;
+    token: string;
+    fullName: string;
+    idNumber: string;
+    taxNumber: string;
+    bankName: string;
+    accountName: string;
+    accountType: string;
+    accountNumber: string;
+    branchCode: string;
+    signaturePng: string;
+    optOutMarketing: boolean;
+    userAgent?: string;
+}
+
+interface SignLoeResult {
+    success: boolean;
+    error?: string;
+    reference?: string;
+}
+
+const GUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export async function signLoE(input: SignLoeInput): Promise<SignLoeResult> {
+    if (!input.leadId || !GUID_RE.test(input.leadId)) {
+        return { success: false, error: "Invalid signing request." };
+    }
+    if (!input.fullName || input.fullName.trim().length < 2) {
+        return { success: false, error: "Please provide your full legal name." };
+    }
+    const requiredDetails: Array<[string, string]> = [
+        ["ID number", input.idNumber],
+        ["Income tax number", input.taxNumber],
+        ["Bank name", input.bankName],
+        ["Account name", input.accountName],
+        ["Account type", input.accountType],
+        ["Account number", input.accountNumber],
+        ["Branch name / code", input.branchCode],
+    ];
+    for (const [label, value] of requiredDetails) {
+        if (!value || !value.trim()) {
+            return { success: false, error: `Please provide your ${label}.` };
+        }
+    }
+    if (!input.signaturePng || !input.signaturePng.startsWith("data:image/png;base64,")) {
+        return { success: false, error: "Please draw your signature before submitting." };
+    }
+
+    if (!process.env.LOE_SIGNING_SECRET) {
+        console.error("LOE_SIGNING_SECRET is not configured.");
+        return { success: false, error: "Signing is not currently configured. Please contact us." };
+    }
+
+    const tokenCheck = verifyLoeToken(input.leadId, input.token);
+    if (!tokenCheck.valid) {
+        return { success: false, error: tokenCheck.reason };
+    }
+
+    if (!process.env.DYNAMICS_CLIENT_ID) {
+        console.warn("Dynamics not configured — LoE signing will not persist.");
+        return { success: false, error: "Signing service is unavailable. Please try again shortly." };
+    }
+
+    let leadEmail = "";
+    let leadPhone = "";
+    let leadAddress = "";
+    let leadIndustry = "";
+    let crmName = input.fullName.trim();
+    try {
+        const selectFields = [
+            "ttt_firstname",
+            "ttt_lastname",
+            "ttt_email",
+            "ttt_mobilephone",
+            "riivo_loesigned",
+            "riivo_otherindustry",
+            "riivo_address1street1",
+            "riivo_address1street2",
+            "riivo_address1street3",
+            "riivo_city",
+            "riivo_province",
+            "riivo_zippostalcode",
+        ].join(",");
+        const res = await getRecords(
+            "new_leads",
+            `?$select=${selectFields}&$expand=riivo_Industry_lookup($select=riivo_industry)&$filter=new_leadid eq ${input.leadId}`
+        );
+        const row = res.success && res.value && res.value[0];
+        if (!row) {
+            return { success: false, error: "We could not locate your lead record. Please contact us." };
+        }
+        if (row.riivo_loesigned === true) {
+            return { success: false, error: "This Letter of Engagement has already been signed. A copy was emailed to you." };
+        }
+        leadEmail = row.ttt_email || "";
+        leadPhone = row.ttt_mobilephone || "";
+        leadAddress = [row.riivo_address1street1, row.riivo_address1street2, row.riivo_address1street3, row.riivo_city, row.riivo_province, row.riivo_zippostalcode]
+            .filter(Boolean)
+            .join(", ");
+        leadIndustry = row.riivo_Industry_lookup?.riivo_industry || row.riivo_otherindustry || "";
+        const dynamicsName = [row.ttt_firstname, row.ttt_lastname].filter(Boolean).join(" ").trim();
+        if (dynamicsName) crmName = dynamicsName;
+    } catch (err) {
+        console.error("Failed to fetch lead before signing:", err);
+        return { success: false, error: "We could not verify your record. Please try again." };
+    }
+
+    const signedAt = new Date();
+    const signedAtIso = signedAt.toISOString();
+    const signedAtDisplay = signedAt.toLocaleString("en-ZA", {
+        timeZone: "Africa/Johannesburg",
+        dateStyle: "long",
+        timeStyle: "short",
+    });
+    const referenceId = buildReferenceId(input.leadId, signedAt);
+
+    let ipAddress = "";
+    try {
+        const h = await headers();
+        ipAddress = (h.get("x-forwarded-for") || "").split(",")[0].trim() || h.get("x-real-ip") || "";
+    } catch {
+        ipAddress = "";
+    }
+
+    const metadata: SignatureMetadata = {
+        fullName: input.fullName.trim(),
+        leadId: input.leadId,
+        referenceId,
+        signedAtIso,
+        signedAtDisplay,
+        ipAddress,
+        userAgent: input.userAgent || "",
+        documentVersion: LOE_DOCUMENT_VERSION,
+        optOutMarketing: input.optOutMarketing,
+        idNumber: input.idNumber.trim(),
+        taxNumber: input.taxNumber.trim(),
+        bankName: input.bankName.trim(),
+        accountName: input.accountName.trim(),
+        accountType: input.accountType.trim(),
+        accountNumber: input.accountNumber.trim(),
+        branchCode: input.branchCode.trim(),
+        email: leadEmail,
+        phone: leadPhone,
+        physicalAddress: leadAddress,
+        industry: leadIndustry,
+    };
+
+    let signedPdfBase64 = "";
+    try {
+        const sourceBytes = await loadLoeSourceBytes();
+        const signedBytes = await buildSignedLoePdf(sourceBytes, input.signaturePng, metadata);
+        signedPdfBase64 = Buffer.from(signedBytes).toString("base64");
+    } catch (err) {
+        console.error("Failed to build signed LoE PDF:", err);
+        return { success: false, error: "We could not generate your signed document. Please try again." };
+    }
+
+    const signedFilename = `TTT-LoE-Signed-${signedAt.toISOString().slice(0, 10)}-${input.leadId.slice(0, 8)}.pdf`;
+
+    try {
+        await createRecord("annotations", {
+            subject: "Signed Letter of Engagement",
+            filename: signedFilename,
+            documentbody: signedPdfBase64,
+            mimetype: "application/pdf",
+            isdocument: true,
+            notetext: `Reference: ${referenceId}\nSigned by: ${metadata.fullName}\nSigned at: ${signedAtIso}\nDocument version: ${LOE_DOCUMENT_VERSION}\nIP: ${ipAddress || "n/a"}\nMarketing opt-out: ${input.optOutMarketing ? "yes" : "no"}`,
+            "objectid_new_lead@odata.bind": `/new_leads(${input.leadId})`,
+        });
+    } catch (err) {
+        console.error("Failed to upload signed LoE annotation:", err);
+        return { success: false, error: "We could not save your signed document. Please contact us." };
+    }
+
+    try {
+        await updateRecord("new_leads", input.leadId, {
+            riivo_loesigned: true,
+            riivo_loesignedat: signedAtIso,
+            riivo_loe_signedname: metadata.fullName,
+            riivo_loereference: referenceId,
+            riivo_loemarketingouput: input.optOutMarketing,
+            ttt_idnumber: input.idNumber.trim(),
+            riivo_incometaxnumber: input.taxNumber.trim(),
+            riivo_bankname: input.bankName.trim(),
+            riivo_accountname: input.accountName.trim(),
+            riivo_accounttype: input.accountType.trim(),
+            riivo_accountnumber: input.accountNumber.trim(),
+            riivo_branchnamecode: input.branchCode.trim(),
+        });
+    } catch (err) {
+        console.warn("Failed to update lead audit fields (annotation already saved):", err);
+    }
+
+    try {
+        const signatureBase64 = input.signaturePng.split(",")[1] || "";
+        if (signatureBase64) {
+            const signatureBytes = new Uint8Array(Buffer.from(signatureBase64, "base64"));
+            await uploadFileColumn(
+                "new_leads",
+                input.leadId,
+                "riivo_signatureclient",
+                signatureBytes,
+                `signature-${referenceId}.png`
+            );
+        }
+    } catch (err) {
+        console.warn("Failed to upload signature to riivo_signatureclient (annotation already saved):", err);
+    }
+
+    try {
+        const crmBaseUrl = process.env.DYNAMICS_RESOURCE_URL?.replace(/\/$/, "") || "";
+        const crmLink = crmBaseUrl
+            ? `${crmBaseUrl}/main.aspx?pagetype=entityrecord&etn=new_lead&id=${input.leadId}`
+            : "";
+        await sendSignedLoeEmails({
+            clientEmail: leadEmail,
+            clientName: crmName,
+            referenceId,
+            signedAtDisplay,
+            signedPdfBase64,
+            signedPdfFilename: signedFilename,
+            crmLink,
+        });
+    } catch (err) {
+        console.error("Failed to send signed LoE emails:", err);
+    }
+
+    return { success: true, reference: referenceId };
 }

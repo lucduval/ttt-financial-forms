@@ -10,7 +10,10 @@ import {
     CheckCircle2,
     Calendar,
     ChevronLeft,
-    Briefcase
+    Briefcase,
+    Tag,
+    FileSignature,
+    Clock
 } from 'lucide-react';
 import { PopupModal } from 'react-calendly';
 import FormInput from './ui/FormInput';
@@ -26,6 +29,9 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
     const [loading, setLoading] = useState(false);
     const [isBookingOpen, setIsBookingOpen] = useState(false);
     const [rootElement, setRootElement] = useState<HTMLElement | null>(null);
+    const [loeLeadId, setLoeLeadId] = useState<string | null>(null);
+    const [loeToken, setLoeToken] = useState<string | null>(null);
+    const [loeDeferred, setLoeDeferred] = useState(false);
 
     useEffect(() => {
         if (typeof document !== 'undefined') {
@@ -45,9 +51,21 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
         email: '',
         phone: '',
         industry: '',
+        referralCode: '',
         message: '',
         files: [] as { name: string, content: string, type: string }[]
     });
+    const [referralFromLink, setReferralFromLink] = useState(false);
+
+    useEffect(() => {
+        if (serviceType !== 'tax') return;
+        const params = new URLSearchParams(window.location.search);
+        const ref = params.get('ref');
+        if (ref) {
+            setFormData(prev => ({ ...prev, referralCode: ref }));
+            setReferralFromLink(true);
+        }
+    }, [serviceType]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -61,15 +79,20 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
             const selectedIndustryName = formData.industry
                 ? industries.find((i) => i.id === formData.industry)?.name
                 : undefined;
-            await submitTargetData({
+            const result = await submitTargetData({
                 ...formData,
                 clientType: formData.clientType ? parseInt(formData.clientType) : undefined,
                 name: formData.name || undefined,
                 message: formData.message || undefined,
                 industry: formData.industry || undefined,
                 industryName: selectedIndustryName,
+                referralCode: formData.referralCode?.trim() || undefined,
                 files: formData.files
             }, serviceType);
+            if (serviceType === 'tax' && result?.dynamicsId && result?.loeToken) {
+                setLoeLeadId(result.dynamicsId);
+                setLoeToken(result.loeToken);
+            }
             setSubmitted(true);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         } catch (error) {
@@ -81,9 +104,15 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
     };
 
     if (submitted) {
+        const showLoeChoice = serviceType === 'tax' && loeLeadId && loeToken && !loeDeferred;
+        const isEmbed = typeof window !== 'undefined' && window.location.pathname.startsWith('/embed');
+        const signHref = loeLeadId && loeToken
+            ? `${isEmbed ? '/embed' : ''}/onboarding/loe/${loeLeadId}?token=${encodeURIComponent(loeToken)}`
+            : '#';
+
         return (
             <div className="flex-grow bg-white flex items-center justify-center p-4 py-16">
-                <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center animate-in fade-in zoom-in duration-300">
+                <div className={`${showLoeChoice ? 'max-w-lg' : 'max-w-md'} w-full bg-white rounded-2xl shadow-xl p-8 text-center animate-in fade-in zoom-in duration-300`}>
                     <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                         <CheckCircle2 size={40} className="text-green-600" />
                     </div>
@@ -94,9 +123,46 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
                     <p className="text-slate-500 text-sm mb-8">
                         Our team will review your message and be in touch shortly. You will receive a confirmation email at <span className="font-medium text-slate-700">{formData.email}</span>.
                     </p>
+
+                    {showLoeChoice && (
+                        <div className="mb-8 p-5 bg-blue-50 border border-blue-100 rounded-xl text-left">
+                            <div className="flex items-center gap-2 mb-2">
+                                <FileSignature size={20} className="text-[#0077BB]" />
+                                <h3 className="text-base font-semibold text-slate-800">One last step: Letter of Engagement</h3>
+                            </div>
+                            <p className="text-sm text-slate-600 mb-4">
+                                We need a signed Letter of Engagement before we can begin work on your matter. You can sign it now in under two minutes, or come back to it later via the link in your email.
+                            </p>
+                            <div className="space-y-2">
+                                <a
+                                    href={signHref}
+                                    target="_top"
+                                    className="w-full py-3 px-4 bg-[#0077BB] hover:bg-[#0066a1] text-white rounded-lg font-medium transition-colors shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2"
+                                >
+                                    <FileSignature size={18} />
+                                    Sign Letter of Engagement now
+                                </a>
+                                <button
+                                    onClick={() => setLoeDeferred(true)}
+                                    className="w-full py-3 px-4 text-slate-600 hover:text-slate-900 font-medium transition-colors border border-slate-200 rounded-lg hover:bg-slate-50 flex items-center justify-center gap-2"
+                                >
+                                    <Clock size={16} />
+                                    I&rsquo;ll do this later
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="space-y-3">
                         <button
-                            onClick={() => { setSubmitted(false); setFormData({ clientType: '', name: '', email: '', phone: '', industry: '', message: '', files: [] }); }}
+                            onClick={() => {
+                                setSubmitted(false);
+                                setFormData({ clientType: '', name: '', email: '', phone: '', industry: '', referralCode: '', message: '', files: [] });
+                                setReferralFromLink(false);
+                                setLoeLeadId(null);
+                                setLoeToken(null);
+                                setLoeDeferred(false);
+                            }}
                             className="w-full py-3 px-4 bg-[#0077BB] hover:bg-[#0066a1] text-white rounded-lg font-medium transition-colors shadow-lg shadow-blue-900/20"
                         >
                             Submit Another Application
@@ -218,6 +284,31 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
                                             ))}
                                         </select>
                                     </div>
+                                </div>
+                            )}
+
+                            {serviceType === 'tax' && (
+                                <div>
+                                    <label htmlFor="referralCode" className="block text-sm font-medium text-slate-700 mb-2">
+                                        Referral Code
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute top-3 left-3 pointer-events-none text-slate-400">
+                                            <Tag size={18} />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            id="referralCode"
+                                            name="referralCode"
+                                            value={formData.referralCode}
+                                            onChange={handleInputChange}
+                                            placeholder="Enter your referral code (optional)"
+                                            className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0077BB] focus:border-[#0077BB] transition-colors bg-slate-50 focus:bg-white text-slate-900 placeholder-slate-400 sm:text-sm shadow-sm"
+                                        />
+                                    </div>
+                                    {referralFromLink && (
+                                        <p className="mt-1 text-xs text-[#0077BB]">Referral code applied from your link.</p>
+                                    )}
                                 </div>
                             )}
 
