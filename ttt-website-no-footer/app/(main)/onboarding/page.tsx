@@ -1,12 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ClientOnboardingForm from "@/app/components/ClientOnboardingForm";
 import ServiceSelection from "@/app/components/ServiceSelection";
 import SimpleOnboardingForm from "@/app/components/SimpleOnboardingForm";
 
 export default function OnboardingPage({ hideHeader }: { hideHeader?: boolean } = {}) {
   const [selectedService, setSelectedService] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("ref")) {
+      setSelectedService("tax");
+    }
+  }, []);
 
   const handleServiceSelect = (serviceId: string) => {
     setSelectedService(serviceId);
