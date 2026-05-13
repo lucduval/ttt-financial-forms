@@ -24,7 +24,7 @@ export default function OnboardingPage({ hideHeader }: { hideHeader?: boolean } 
   };
 
   return (
-    <div className="w-full pt-2 pb-8 sm:pt-6 sm:pb-12">
+    <div className="w-full pt-2 pb-2 sm:pt-4 sm:pb-4">
       {!selectedService && (
         <ServiceSelection onSelect={handleServiceSelect} hideHeader={hideHeader} />
       )}
