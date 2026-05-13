@@ -24,7 +24,7 @@ export default function OnboardingPage({ hideHeader }: { hideHeader?: boolean } 
   };
 
   return (
-    <div className="w-full pt-12 pb-16">
+    <div className="w-full pt-2 pb-8 sm:pt-6 sm:pb-12">
       {!selectedService && (
         <ServiceSelection onSelect={handleServiceSelect} hideHeader={hideHeader} />
       )}
@@ -34,9 +34,7 @@ export default function OnboardingPage({ hideHeader }: { hideHeader?: boolean } 
       )}
 
       {selectedService && selectedService !== "accounting" && (
-        <div className="py-12 px-4">
-          <SimpleOnboardingForm serviceType={selectedService} onBack={handleBack} />
-        </div>
+        <SimpleOnboardingForm serviceType={selectedService} onBack={handleBack} />
       )}
     </div>
   );
