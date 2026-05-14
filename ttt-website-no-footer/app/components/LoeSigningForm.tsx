@@ -22,13 +22,11 @@ interface LoeSigningFormProps {
 }
 
 export default function LoeSigningForm({ leadId, token, prefill }: LoeSigningFormProps) {
-    const termsEndRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const drawingRef = useRef(false);
     const lastPointRef = useRef<{ x: number; y: number } | null>(null);
 
     const [termsExpanded, setTermsExpanded] = useState(false);
-    const [scrolledToBottom, setScrolledToBottom] = useState(false);
     const [agreed, setAgreed] = useState(false);
     const [optOutMarketing, setOptOutMarketing] = useState(false);
     const [fullName, setFullName] = useState(prefill.fullName || "");
@@ -43,22 +41,6 @@ export default function LoeSigningForm({ leadId, token, prefill }: LoeSigningFor
     const [submitting, setSubmitting] = useState(false);
     const [done, setDone] = useState<{ reference: string } | null>(null);
     const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        if (!termsExpanded) return;
-        const sentinel = termsEndRef.current;
-        if (!sentinel) return;
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (entries.some((entry) => entry.isIntersecting)) {
-                    setScrolledToBottom(true);
-                }
-            },
-            { threshold: 0, rootMargin: "0px 0px -10% 0px" }
-        );
-        observer.observe(sentinel);
-        return () => observer.disconnect();
-    }, [termsExpanded]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -233,17 +215,15 @@ export default function LoeSigningForm({ leadId, token, prefill }: LoeSigningFor
                         {termsExpanded && (
                             <div id="loe-terms-content" className="border-t border-slate-200 p-4 sm:p-6">
                                 <LoeTermsContent />
-                                <div ref={termsEndRef} aria-hidden="true" />
                             </div>
                         )}
                     </div>
 
-                    <label className={`flex items-start gap-3 p-3 rounded-lg border ${scrolledToBottom ? "border-slate-200 bg-white cursor-pointer hover:bg-slate-50" : "border-slate-100 bg-slate-50 opacity-60 cursor-not-allowed"} transition-colors`}>
+                    <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 bg-white cursor-pointer hover:bg-slate-50 transition-colors">
                         <input
                             type="checkbox"
                             checked={agreed}
                             onChange={(e) => setAgreed(e.target.checked)}
-                            disabled={!scrolledToBottom}
                             className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#0077BB] focus:ring-[#0077BB]"
                         />
                         <span className="text-sm text-slate-700">
