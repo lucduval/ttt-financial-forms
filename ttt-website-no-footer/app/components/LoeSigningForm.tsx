@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { CheckCircle2, FileSignature, Eraser } from "lucide-react";
+import { CheckCircle2, FileSignature, Eraser, ChevronDown, ChevronUp } from "lucide-react";
 import LoeTermsContent from "./LoeTermsContent";
 import { signLoE } from "../actions";
 
@@ -27,6 +27,7 @@ export default function LoeSigningForm({ leadId, token, prefill }: LoeSigningFor
     const drawingRef = useRef(false);
     const lastPointRef = useRef<{ x: number; y: number } | null>(null);
 
+    const [termsExpanded, setTermsExpanded] = useState(false);
     const [scrolledToBottom, setScrolledToBottom] = useState(false);
     const [agreed, setAgreed] = useState(false);
     const [optOutMarketing, setOptOutMarketing] = useState(false);
@@ -44,6 +45,7 @@ export default function LoeSigningForm({ leadId, token, prefill }: LoeSigningFor
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        if (!termsExpanded) return;
         const sentinel = termsEndRef.current;
         if (!sentinel) return;
         const observer = new IntersectionObserver(
@@ -56,7 +58,7 @@ export default function LoeSigningForm({ leadId, token, prefill }: LoeSigningFor
         );
         observer.observe(sentinel);
         return () => observer.disconnect();
-    }, []);
+    }, [termsExpanded]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -211,9 +213,29 @@ export default function LoeSigningForm({ leadId, token, prefill }: LoeSigningFor
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-4 sm:p-8 space-y-6">
-                    <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 sm:p-6">
-                        <LoeTermsContent />
-                        <div ref={termsEndRef} aria-hidden="true" />
+                    <div className="rounded-lg border border-slate-200 bg-slate-50/50 overflow-hidden">
+                        <button
+                            type="button"
+                            onClick={() => setTermsExpanded((v) => !v)}
+                            aria-expanded={termsExpanded}
+                            aria-controls="loe-terms-content"
+                            className="w-full flex items-center justify-between gap-3 px-4 sm:px-6 py-4 text-left hover:bg-slate-100/60 transition-colors"
+                        >
+                            <span className="text-sm font-medium text-slate-800">
+                                {termsExpanded ? "Hide" : "Read"} the Letter of Engagement &amp; Terms
+                            </span>
+                            {termsExpanded ? (
+                                <ChevronUp size={18} className="text-slate-500 shrink-0" />
+                            ) : (
+                                <ChevronDown size={18} className="text-slate-500 shrink-0" />
+                            )}
+                        </button>
+                        {termsExpanded && (
+                            <div id="loe-terms-content" className="border-t border-slate-200 p-4 sm:p-6">
+                                <LoeTermsContent />
+                                <div ref={termsEndRef} aria-hidden="true" />
+                            </div>
+                        )}
                     </div>
 
                     <label className={`flex items-start gap-3 p-3 rounded-lg border ${scrolledToBottom ? "border-slate-200 bg-white cursor-pointer hover:bg-slate-50" : "border-slate-100 bg-slate-50 opacity-60 cursor-not-allowed"} transition-colors`}>
