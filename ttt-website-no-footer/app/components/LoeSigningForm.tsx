@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { CheckCircle2, FileSignature, Eraser, ChevronDown } from "lucide-react";
+import { CheckCircle2, FileSignature, Eraser } from "lucide-react";
 import LoeTermsContent from "./LoeTermsContent";
 import { signLoE } from "../actions";
 
@@ -22,7 +22,7 @@ interface LoeSigningFormProps {
 }
 
 export default function LoeSigningForm({ leadId, token, prefill }: LoeSigningFormProps) {
-    const termsScrollRef = useRef<HTMLDivElement>(null);
+    const termsEndRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const drawingRef = useRef(false);
     const lastPointRef = useRef<{ x: number; y: number } | null>(null);
@@ -44,18 +44,18 @@ export default function LoeSigningForm({ leadId, token, prefill }: LoeSigningFor
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const el = termsScrollRef.current;
-        if (!el) return;
-        const onScroll = () => {
-            const bottomReached = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
-            if (bottomReached) setScrolledToBottom(true);
-        };
-        el.addEventListener("scroll", onScroll);
-        // If terms shorter than container, allow agreement immediately
-        if (el.scrollHeight <= el.clientHeight + 4) {
-            setScrolledToBottom(true);
-        }
-        return () => el.removeEventListener("scroll", onScroll);
+        const sentinel = termsEndRef.current;
+        if (!sentinel) return;
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries.some((entry) => entry.isIntersecting)) {
+                    setScrolledToBottom(true);
+                }
+            },
+            { threshold: 0, rootMargin: "0px 0px -10% 0px" }
+        );
+        observer.observe(sentinel);
+        return () => observer.disconnect();
     }, []);
 
     useEffect(() => {
@@ -121,12 +121,6 @@ export default function LoeSigningForm({ leadId, token, prefill }: LoeSigningFor
         if (!ctx) return;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         setHasSignature(false);
-    };
-
-    const scrollToBottom = () => {
-        const el = termsScrollRef.current;
-        if (!el) return;
-        el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
     };
 
     const detailsComplete =
@@ -217,22 +211,9 @@ export default function LoeSigningForm({ leadId, token, prefill }: LoeSigningFor
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-4 sm:p-8 space-y-6">
-                    <div className="rounded-lg border border-slate-200 bg-slate-50/50">
-                        <div
-                            ref={termsScrollRef}
-                            className="max-h-[55vh] sm:max-h-[60vh] overflow-y-auto p-4 sm:p-6"
-                        >
-                            <LoeTermsContent />
-                        </div>
-                        {!scrolledToBottom && (
-                            <button
-                                type="button"
-                                onClick={scrollToBottom}
-                                className="w-full flex items-center justify-center gap-2 py-2 text-xs font-medium text-[#0077BB] hover:bg-slate-100 border-t border-slate-200 transition-colors"
-                            >
-                                Scroll to the end to enable signing <ChevronDown size={14} />
-                            </button>
-                        )}
+                    <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 sm:p-6">
+                        <LoeTermsContent />
+                        <div ref={termsEndRef} aria-hidden="true" />
                     </div>
 
                     <label className={`flex items-start gap-3 p-3 rounded-lg border ${scrolledToBottom ? "border-slate-200 bg-white cursor-pointer hover:bg-slate-50" : "border-slate-100 bg-slate-50 opacity-60 cursor-not-allowed"} transition-colors`}>
