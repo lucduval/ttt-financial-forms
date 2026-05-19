@@ -13,11 +13,13 @@ import {
     Briefcase,
     Tag,
     FileSignature,
-    Clock
+    Clock,
+    Info,
+    Share2
 } from 'lucide-react';
 import { PopupModal } from 'react-calendly';
 import FormInput from './ui/FormInput';
-import { getIndustries, submitTargetData } from '../actions';
+import { getBrandAssociates, getIndustries, submitTargetData } from '../actions';
 
 interface SimpleOnboardingFormProps {
     serviceType: string;
@@ -32,6 +34,7 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
     const [loeLeadId, setLoeLeadId] = useState<string | null>(null);
     const [loeToken, setLoeToken] = useState<string | null>(null);
     const [loeDeferred, setLoeDeferred] = useState(false);
+    const [duplicateBlock, setDuplicateBlock] = useState<null | 'own-code' | 'generic'>(null);
 
     useEffect(() => {
         if (typeof document !== 'undefined') {
@@ -40,6 +43,8 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
     }, []);
 
     const [industries, setIndustries] = useState<{ id: string; name: string }[]>([]);
+    const [brandAssociates, setBrandAssociates] = useState<{ slug: string; displayName: string }[]>([]);
+    const [brandAssociatesLoaded, setBrandAssociatesLoaded] = useState(false);
 
     useEffect(() => {
         getIndustries().then(setIndustries).catch(console.error);
@@ -52,20 +57,47 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
         phone: '',
         industry: '',
         referralCode: '',
+        referralSource: '',
+        marketerSlug: '',
         message: '',
         files: [] as { name: string, content: string, type: string }[]
     });
     const [referralFromLink, setReferralFromLink] = useState(false);
+    const [marketerFromLink, setMarketerFromLink] = useState(false);
 
     useEffect(() => {
         if (serviceType !== 'tax') return;
         const params = new URLSearchParams(window.location.search);
         const ref = params.get('ref');
+        const src = params.get('src');
         if (ref) {
-            setFormData(prev => ({ ...prev, referralCode: ref }));
+            setFormData(prev => ({ ...prev, referralCode: ref, referralSource: src || '' }));
             setReferralFromLink(true);
         }
     }, [serviceType]);
+
+    useEffect(() => {
+        let cancelled = false;
+        getBrandAssociates()
+            .then(list => {
+                if (cancelled) return;
+                setBrandAssociates(list);
+                const params = new URLSearchParams(window.location.search);
+                const m = params.get('m');
+                if (m) {
+                    const slug = m.trim().toLowerCase();
+                    if (/^[a-z0-9-]{1,40}$/.test(slug) && list.some(a => a.slug === slug)) {
+                        setFormData(prev => ({ ...prev, marketerSlug: slug }));
+                        setMarketerFromLink(true);
+                    }
+                }
+            })
+            .catch(console.error)
+            .finally(() => {
+                if (!cancelled) setBrandAssociatesLoaded(true);
+            });
+        return () => { cancelled = true; };
+    }, []);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -87,8 +119,15 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
                 industry: formData.industry || undefined,
                 industryName: selectedIndustryName,
                 referralCode: formData.referralCode?.trim() || undefined,
+                referralSource: formData.referralSource?.trim() || undefined,
+                marketerSlug: formData.marketerSlug?.trim() || undefined,
                 files: formData.files
             }, serviceType);
+            if (result && 'duplicate' in result && result.duplicate) {
+                setDuplicateBlock(result.duplicate);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
             if (serviceType === 'tax' && result?.dynamicsId && result?.loeToken) {
                 setLoeLeadId(result.dynamicsId);
                 setLoeToken(result.loeToken);
@@ -102,6 +141,65 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
             setLoading(false);
         }
     };
+
+    if (duplicateBlock) {
+        const isOwnCode = duplicateBlock === 'own-code';
+        return (
+            <div className="flex-grow bg-white flex items-center justify-center p-4 py-16">
+                <div className="max-w-lg w-full bg-white rounded-2xl shadow-xl p-8 text-center animate-in fade-in zoom-in duration-300">
+                    <div className={`w-20 h-20 ${isOwnCode ? 'bg-amber-100' : 'bg-blue-100'} rounded-full flex items-center justify-center mx-auto mb-6`}>
+                        {isOwnCode
+                            ? <Share2 size={36} className="text-amber-600" />
+                            : <Info size={36} className="text-[#0077BB]" />}
+                    </div>
+                    <h2 className="text-2xl font-bold text-slate-800 mb-3">
+                        {isOwnCode ? "That's your own referral code" : "You're already signed up"}
+                    </h2>
+                    {isOwnCode ? (
+                        <p className="text-slate-600 mb-2 leading-relaxed">
+                            That&rsquo;s <span className="font-semibold">your</span> referral code, and you&rsquo;re already signed up with us! To earn the cash reward, share your code with friends and family; their signup gets credited to you.
+                        </p>
+                    ) : (
+                        <p className="text-slate-600 mb-2 leading-relaxed">
+                            You&rsquo;re already signed up with us. If you need to update your details or have a question, please get in touch using one of the options below.
+                        </p>
+                    )}
+                    <div className="mt-6 mb-8 p-5 bg-slate-50 border border-slate-200 rounded-xl text-left">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">
+                            {isOwnCode ? 'Questions? Get in touch' : 'Get in touch'}
+                        </p>
+                        <div className="space-y-2">
+                            <a
+                                href="https://wa.me/27764446801"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="flex items-center gap-3 text-slate-700 hover:text-[#0077BB] transition-colors"
+                            >
+                                <Phone size={18} className="text-[#25D366]" />
+                                <span className="font-medium">WhatsApp +27 76 444 6801</span>
+                            </a>
+                            <a
+                                href="mailto:info@ttt-tax.co.za"
+                                className="flex items-center gap-3 text-slate-700 hover:text-[#0077BB] transition-colors"
+                            >
+                                <Mail size={18} className="text-[#0077BB]" />
+                                <span className="font-medium">info@ttt-tax.co.za</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div className="space-y-3">
+                        <button
+                            onClick={() => setDuplicateBlock(null)}
+                            className="w-full py-3 px-4 text-slate-600 hover:text-slate-900 font-medium transition-colors border border-slate-200 rounded-lg hover:bg-slate-50 flex items-center justify-center gap-2"
+                        >
+                            <ChevronLeft size={16} />
+                            Back to form
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     if (submitted) {
         const showLoeChoice = serviceType === 'tax' && loeLeadId && loeToken && !loeDeferred;
@@ -157,8 +255,9 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
                         <button
                             onClick={() => {
                                 setSubmitted(false);
-                                setFormData({ clientType: '', name: '', email: '', phone: '', industry: '', referralCode: '', message: '', files: [] });
+                                setFormData({ clientType: '', name: '', email: '', phone: '', industry: '', referralCode: '', referralSource: '', marketerSlug: '', message: '', files: [] });
                                 setReferralFromLink(false);
+                                setMarketerFromLink(false);
                                 setLoeLeadId(null);
                                 setLoeToken(null);
                                 setLoeDeferred(false);
@@ -308,6 +407,35 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
                                     </div>
                                     {referralFromLink && (
                                         <p className="mt-1 text-xs text-[#0077BB]">Referral code applied from your link.</p>
+                                    )}
+                                </div>
+                            )}
+
+                            {brandAssociatesLoaded && brandAssociates.length > 0 && (
+                                <div>
+                                    <label htmlFor="marketerSlug" className="block text-sm font-medium text-slate-700 mb-2">
+                                        {marketerFromLink ? 'Your TTT Brand Associate' : 'Referred by a TTT Brand Associate? (optional)'}
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute top-3 left-3 pointer-events-none text-slate-400">
+                                            <User size={18} />
+                                        </div>
+                                        <select
+                                            id="marketerSlug"
+                                            name="marketerSlug"
+                                            value={formData.marketerSlug}
+                                            onChange={handleInputChange}
+                                            disabled={marketerFromLink}
+                                            className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0077BB] focus:border-[#0077BB] transition-colors bg-slate-50 focus:bg-white text-slate-900 sm:text-sm shadow-sm appearance-none disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed"
+                                        >
+                                            <option value="">{marketerFromLink ? '' : 'Select (optional)'}</option>
+                                            {brandAssociates.map(a => (
+                                                <option key={a.slug} value={a.slug}>{a.displayName}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    {marketerFromLink && (
+                                        <p className="mt-1 text-xs text-[#0077BB]">Linked from your invitation.</p>
                                     )}
                                 </div>
                             )}

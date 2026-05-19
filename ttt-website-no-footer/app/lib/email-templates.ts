@@ -196,17 +196,109 @@ export function buildTeamNotificationHtml(data: EmailData, serviceType: string, 
 </html>`;
 }
 
+export interface ContactFormData {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    message: string;
+}
+
+function escapeHtml(value: string): string {
+    return value
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+export function buildContactFormTeamHtml(data: ContactFormData, dynamicsId?: string | null): string {
+    const now = new Date().toLocaleString("en-ZA", { timeZone: "Africa/Johannesburg" });
+    const crmBaseUrl = process.env.DYNAMICS_RESOURCE_URL?.replace(/\/$/, "") || "";
+    const crmLink = dynamicsId && crmBaseUrl
+        ? `${crmBaseUrl}/main.aspx?pagetype=entityrecord&etn=new_lead&id=${dynamicsId}`
+        : "";
+
+    const fullName = `${data.firstName} ${data.lastName}`.trim();
+    const safeName = escapeHtml(fullName);
+    const safeEmail = escapeHtml(data.email);
+    const safePhone = escapeHtml(data.phone);
+    const safeMessage = escapeHtml(data.message);
+
+    return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; background-color: #f4f4f4;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px 0;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden;">
+                    <tr>
+                        <td style="background-color: #0077BB; padding: 24px 32px;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 20px;">New Website Contact</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 24px 32px;">
+                            <p style="margin: 0 0 16px; color: #333; font-size: 14px;">A new message has been submitted via the website contact form.</p>
+                            <table width="100%" cellpadding="0" cellspacing="0" style="font-size: 14px; color: #333;">
+                                <tr>
+                                    <td style="padding: 8px 12px; border-bottom: 1px solid #eee; color: #555; font-weight: 600; width: 140px;">Name</td>
+                                    <td style="padding: 8px 12px; border-bottom: 1px solid #eee;">${safeName}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px 12px; border-bottom: 1px solid #eee; color: #555; font-weight: 600;">Email</td>
+                                    <td style="padding: 8px 12px; border-bottom: 1px solid #eee;"><a href="mailto:${safeEmail}" style="color: #0077BB;">${safeEmail}</a></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px 12px; border-bottom: 1px solid #eee; color: #555; font-weight: 600;">Phone</td>
+                                    <td style="padding: 8px 12px; border-bottom: 1px solid #eee;">${safePhone}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px 12px; border-bottom: 1px solid #eee; color: #555; font-weight: 600; vertical-align: top;">Message</td>
+                                    <td style="padding: 8px 12px; border-bottom: 1px solid #eee; white-space: pre-wrap;">${safeMessage}</td>
+                                </tr>
+                            </table>
+                            ${crmLink ? `<a href="${crmLink}" style="display: inline-block; margin-top: 16px; padding: 10px 20px; background-color: #0077BB; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 14px;">View in CRM</a>` : ""}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 16px 32px; background-color: #f9f9f9; font-size: 12px; color: #999;">
+                            Submitted on ${now}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`;
+}
+
 export function buildClientThankYouHtml(
     data: EmailData,
     serviceType: string,
     consultation?: ConsultationData | null,
-    footerImageUrl?: string
+    footerImageUrl?: string,
+    loeSignUrl?: string
 ): string {
     const clientName = getClientName(data);
     const firstName = clientName.split(" ")[0];
     footerImageUrl = footerImageUrl || process.env.EMAIL_FOOTER_IMAGE_URL || "";
     const logoUrl = process.env.EMAIL_LOGO_URL || "";
     const branding = getServiceBranding(serviceType);
+
+    const loeSection = loeSignUrl ? `
+            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 6px; margin: 0 0 20px;">
+                <tr><td style="padding: 16px 20px; font-size: 14px; color: #333;">
+                    <p style="margin: 0 0 8px; font-weight: 600; color: #0077BB;">One last step: Letter of Engagement</p>
+                    <p style="margin: 0 0 12px;">Before we can begin work on your matter we need a signed Letter of Engagement. It takes under two minutes to complete.</p>
+                    <p style="margin: 0;"><a href="${loeSignUrl}" style="display: inline-block; padding: 10px 18px; background-color: #0077BB; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600;">Sign Letter of Engagement</a></p>
+                    <p style="margin: 12px 0 0; font-size: 12px; color: #666;">This personal link is valid for 72 hours. If it has expired, please reply to this email and we will send a new one.</p>
+                </td></tr>
+            </table>` : "";
 
     let consultationSection: string;
     if (consultation) {
@@ -247,6 +339,7 @@ export function buildClientThankYouHtml(
                             <p style="margin: 0 0 16px; font-size: 14px; color: #333;">Thank you for your interest in our ${branding.serviceLabel}. We have received your introduction form and we are currently busy processing your information. We strive to provide accurate and timely information and services.</p>
                             <div style="font-size: 14px; color: #333;">
                                 ${consultationSection}
+                                ${loeSection}
                             </div>
                             <p style="margin: 24px 0 4px; font-size: 14px; color: #333;">Kind Regards,</p>
                             <p style="margin: 0 0 4px; font-size: 14px; color: #333; font-weight: 600;">${branding.brandName}</p>

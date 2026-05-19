@@ -2,7 +2,12 @@
 
 import { headers } from "next/headers";
 import { createRecord, updateRecord, getRecords, uploadFileColumn } from "./lib/dynamics";
-import { sendTeamNotificationEmail, sendClientThankYouEmail, sendSignedLoeEmails } from "./lib/email";
+import {
+    sendTeamNotificationEmail,
+    sendClientThankYouEmail,
+    sendSignedLoeEmails,
+    sendContactFormTeamEmail,
+} from "./lib/email";
 import { mintLoeToken, verifyLoeToken } from "./lib/loe-token";
 import {
     buildReferenceId,
@@ -31,6 +36,98 @@ export async function getIndustries() {
     }
 }
 
+export async function getBrandAssociates(): Promise<{ slug: string; displayName: string }[]> {
+    try {
+        if (!process.env.DYNAMICS_CLIENT_ID) {
+            return [];
+        }
+        const res = await getRecords(
+            'systemusers',
+            "?$select=firstname&$filter=jobtitle eq 'Brand Associate' and isdisabled eq false"
+        );
+        if (!res.success || !res.value) return [];
+        const seen = new Set<string>();
+        const list: { slug: string; displayName: string }[] = [];
+        for (const u of res.value) {
+            const firstName = typeof u.firstname === 'string' ? u.firstname.trim() : '';
+            if (!firstName) continue;
+            const slug = firstName.toLowerCase();
+            if (seen.has(slug)) continue;
+            seen.add(slug);
+            list.push({ slug, displayName: firstName });
+        }
+        return list.sort((a, b) => a.displayName.localeCompare(b.displayName));
+    } catch (error) {
+        console.error("Failed to fetch brand associates:", error);
+        return [];
+    }
+}
+
+const MARKETER_SLUG_RE = /^[a-z0-9-]{1,40}$/;
+
+type DuplicateLookupResult = { isDuplicate: false } | { isDuplicate: true; referralCodeOnFile: string | null };
+
+async function findDuplicateLead(rawEmail: string): Promise<DuplicateLookupResult> {
+    const email = rawEmail.trim().toLowerCase();
+    if (!email) return { isDuplicate: false };
+    if (!process.env.DYNAMICS_CLIENT_ID) return { isDuplicate: false };
+    const escaped = email.replace(/'/g, "''");
+
+    let referralCodeOnFile: string | null = null;
+    let matched = false;
+
+    try {
+        const contactRes = await getRecords(
+            'contacts',
+            `?$select=contactid,riivo_referralcode&$filter=emailaddress1 eq '${escaped}' and statecode eq 0&$top=1`
+        );
+        const contact = contactRes.success && contactRes.value && contactRes.value[0];
+        if (contact) {
+            matched = true;
+            const code = typeof contact.riivo_referralcode === 'string' ? contact.riivo_referralcode.trim() : '';
+            referralCodeOnFile = code || null;
+        }
+    } catch (err) {
+        console.error("Duplicate lookup (contacts) failed:", err);
+    }
+
+    if (!matched) {
+        try {
+            const leadRes = await getRecords(
+                'new_leads',
+                `?$select=new_leadid&$filter=ttt_email eq '${escaped}'&$top=1`
+            );
+            if (leadRes.success && leadRes.value && leadRes.value[0]) {
+                matched = true;
+            }
+        } catch (err) {
+            console.error("Duplicate lookup (new_leads) failed:", err);
+        }
+    }
+
+    return matched ? { isDuplicate: true, referralCodeOnFile } : { isDuplicate: false };
+}
+
+async function resolveMarketerSystemUserId(rawSlug: string): Promise<string | null> {
+    const slug = rawSlug.trim().toLowerCase();
+    if (!slug || !MARKETER_SLUG_RE.test(slug)) {
+        console.warn(`Marketer slug "${rawSlug}" failed validation — skipping attribution.`);
+        return null;
+    }
+    if (!process.env.DYNAMICS_CLIENT_ID) return null;
+    const escaped = slug.replace(/'/g, "''");
+    const lookup = await getRecords(
+        'systemusers',
+        `?$select=systemuserid&$filter=jobtitle eq 'Brand Associate' and isdisabled eq false and tolower(firstname) eq '${escaped}'&$top=2`
+    );
+    const matches = lookup.success && lookup.value ? lookup.value : [];
+    if (matches.length === 1) {
+        return matches[0].systemuserid;
+    }
+    console.warn(`Marketer slug "${slug}" matched ${matches.length} brand associates — skipping attribution.`);
+    return null;
+}
+
 export async function submitContactForm(data: {
     firstName: string;
     lastName: string;
@@ -38,26 +135,42 @@ export async function submitContactForm(data: {
     phone: string;
     message: string;
 }): Promise<{ success: boolean; error?: string }> {
-    const leadData = {
+    const leadData: Record<string, unknown> = {
         subject: `Website Contact — ${data.firstName} ${data.lastName}`,
         ttt_firstname: data.firstName,
         ttt_lastname: data.lastName,
         ttt_email: data.email,
         ttt_mobilephone: data.phone,
         description: data.message,
+        riivo_leadsource: 463630001,
     };
 
+    const ownerTeamId = process.env.DYNAMICS_OWNER_TEAM_ID;
+    if (ownerTeamId) {
+        leadData["ownerid@odata.bind"] = `/teams(${ownerTeamId})`;
+    }
+
+    let dynamicsId: string | null = null;
     try {
         if (process.env.DYNAMICS_CLIENT_ID) {
-            await createRecord('new_leads', leadData);
+            const result = await createRecord('new_leads', leadData);
+            dynamicsId = result.id ?? null;
         } else {
             await new Promise(resolve => setTimeout(resolve, 800));
+            return { success: true };
         }
-        return { success: true };
     } catch (error) {
         console.error("Contact form submission failed:", error);
         return { success: false, error: "Submission failed. Please try again." };
     }
+
+    try {
+        await sendContactFormTeamEmail(data, dynamicsId);
+    } catch (emailError) {
+        console.error("Contact form team email failed (lead was created):", emailError);
+    }
+
+    return { success: true };
 }
 
 interface FormSubmitData {
@@ -85,6 +198,7 @@ interface FormSubmitData {
     referralSource?: string;
     referrerName?: string;
     referralCode?: string;
+    marketerSlug?: string;
     services?: {
         // Legacy fields
         bookkeeping?: boolean;
@@ -124,6 +238,17 @@ interface FormSubmitData {
 
 export async function submitTargetData(data: FormSubmitData, serviceType: string, options?: { sendEmails?: boolean; existingLeadId?: string }) {
     console.log(`Submitting data for service: ${serviceType}`);
+
+    if (!options?.existingLeadId && data.email) {
+        const dup = await findDuplicateLead(data.email);
+        if (dup.isDuplicate) {
+            const enteredCode = (data.referralCode || '').trim().toLowerCase();
+            const ownCode = (dup.referralCodeOnFile || '').trim().toLowerCase();
+            const matchesOwnCode = enteredCode.length > 0 && ownCode.length > 0 && enteredCode === ownCode;
+            console.log(`Duplicate signup blocked for ${data.email} (reason: ${matchesOwnCode ? 'own-code' : 'generic'}).`);
+            return { success: false as const, duplicate: matchesOwnCode ? ('own-code' as const) : ('generic' as const) };
+        }
+    }
 
     let description = `Service Type: ${serviceType}\n\n`;
 
@@ -245,8 +370,19 @@ export async function submitTargetData(data: FormSubmitData, serviceType: string
                     );
                     const referrerId = lookup.success && lookup.value && lookup.value[0]?.contactid;
                     if (referrerId) {
+                        const src = (data.referralSource || '').toLowerCase();
+                        let referralSourceValue = 463630002; // Other
+                        if (src === 'campaign' || src === 'may2026' || src === 'may-2026') {
+                            referralSourceValue = 463630000;
+                        } else if (src === 'whatsapp' || src === 'wa') {
+                            referralSourceValue = 463630001;
+                        }
                         leadData["riivo_Referrer@odata.bind"] = `/contacts(${referrerId})`;
                         leadData["riivo_validreferral"] = true;
+                        leadData["riivo_referralcode"] = code;
+                        leadData["riivo_referralcodeused"] = code;
+                        leadData["riivo_referraldate"] = new Date().toISOString();
+                        leadData["riivo_referralsource"] = referralSourceValue;
                     } else {
                         console.log(`Referral code "${code}" did not match any contact.`);
                     }
@@ -254,6 +390,17 @@ export async function submitTargetData(data: FormSubmitData, serviceType: string
                     console.error("Referral code lookup failed:", err);
                 }
             }
+        }
+    }
+
+    if (data.marketerSlug) {
+        try {
+            const marketerId = await resolveMarketerSystemUserId(data.marketerSlug);
+            if (marketerId) {
+                leadData["riivo_Marketer@odata.bind"] = `/systemusers(${marketerId})`;
+            }
+        } catch (err) {
+            console.error("Marketer slug lookup failed:", err);
         }
     }
 
@@ -312,25 +459,39 @@ export async function submitTargetData(data: FormSubmitData, serviceType: string
             console.log("All documents uploaded successfully.");
         }
 
-        // Send emails after successful lead creation
-        if (options?.sendEmails !== false) {
-            try {
-                await Promise.all([
-                    sendTeamNotificationEmail(data, serviceType, dynamicsId),
-                    sendClientThankYouEmail(data, serviceType),
-                ]);
-                console.log("Emails sent successfully.");
-            } catch (emailError) {
-                console.error("Email sending failed:", emailError);
-            }
-        }
-
         let loeToken: string | null = null;
         if (dynamicsId && st === 'tax' && process.env.LOE_SIGNING_SECRET) {
             try {
                 loeToken = mintLoeToken(dynamicsId);
             } catch (tokenError) {
                 console.error("Failed to mint LoE signing token:", tokenError);
+            }
+        }
+
+        let loeSignUrl: string | undefined;
+        if (dynamicsId && loeToken) {
+            try {
+                const h = await headers();
+                const host = h.get("x-forwarded-host") || h.get("host");
+                const proto = h.get("x-forwarded-proto") || "https";
+                if (host) {
+                    loeSignUrl = `${proto}://${host}/onboarding/loe/${dynamicsId}?token=${encodeURIComponent(loeToken)}`;
+                }
+            } catch (urlError) {
+                console.error("Failed to build LoE signing URL:", urlError);
+            }
+        }
+
+        // Send emails after successful lead creation
+        if (options?.sendEmails !== false) {
+            try {
+                await Promise.all([
+                    sendTeamNotificationEmail(data, serviceType, dynamicsId),
+                    sendClientThankYouEmail(data, serviceType, null, loeSignUrl),
+                ]);
+                console.log("Emails sent successfully.");
+            } catch (emailError) {
+                console.error("Email sending failed:", emailError);
             }
         }
 
@@ -521,6 +682,9 @@ export async function signLoE(input: SignLoeInput): Promise<SignLoeResult> {
         await updateRecord("new_leads", input.leadId, {
             riivo_loesigned: true,
             riivo_loesignedat: signedAtIso,
+            riivo_loesubmitted: true,
+            riivo_loesubmissiondate: signedAtIso,
+            riivo_loereceived: true,
             riivo_loe_signedname: metadata.fullName,
             riivo_loereference: referenceId,
             riivo_loemarketingouput: input.optOutMarketing,
@@ -550,6 +714,19 @@ export async function signLoE(input: SignLoeInput): Promise<SignLoeResult> {
         }
     } catch (err) {
         console.warn("Failed to upload signature to riivo_signatureclient (annotation already saved):", err);
+    }
+
+    try {
+        const signedPdfBytes = new Uint8Array(Buffer.from(signedPdfBase64, "base64"));
+        await uploadFileColumn(
+            "new_leads",
+            input.leadId,
+            "riivo_signedletterofengagement",
+            signedPdfBytes,
+            signedFilename
+        );
+    } catch (err) {
+        console.warn("Failed to upload signed LoE to riivo_signedletterofengagement (annotation already saved):", err);
     }
 
     try {

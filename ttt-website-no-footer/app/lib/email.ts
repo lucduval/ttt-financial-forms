@@ -5,9 +5,11 @@ import path from "path";
 import {
     buildTeamNotificationHtml,
     buildClientThankYouHtml,
+    buildContactFormTeamHtml,
     getServiceBranding,
     type EmailData,
     type ConsultationData,
+    type ContactFormData,
 } from "./email-templates";
 
 interface EmailAttachment {
@@ -259,10 +261,31 @@ export async function sendSignedLoeEmails(params: {
     await Promise.all(tasks);
 }
 
+export async function sendContactFormTeamEmail(
+    data: ContactFormData,
+    dynamicsId?: string | null
+): Promise<void> {
+    const teamAddresses = process.env.EMAIL_TEAM_ADDRESSES;
+    if (!teamAddresses) {
+        console.warn("EMAIL_TEAM_ADDRESSES not set — skipping contact-form team notification.");
+        return;
+    }
+    const recipients = teamAddresses.split(",").map((addr) => addr.trim()).filter(Boolean);
+    if (recipients.length === 0) {
+        console.warn("EMAIL_TEAM_ADDRESSES has no valid entries — skipping contact-form team notification.");
+        return;
+    }
+
+    const subject = `New Website Contact — ${data.firstName} ${data.lastName}`;
+    const html = buildContactFormTeamHtml(data, dynamicsId);
+    await sendEmail(recipients, subject, html, data.email);
+}
+
 export async function sendClientThankYouEmail(
     data: EmailData,
     serviceType: string,
-    consultation?: ConsultationData | null
+    consultation?: ConsultationData | null,
+    loeSignUrl?: string
 ): Promise<void> {
     if (!data.email) {
         console.warn("No client email provided — skipping thank-you email.");
@@ -271,7 +294,7 @@ export async function sendClientThankYouEmail(
 
     const branding = getServiceBranding(serviceType);
     const subject = `${branding.brandName} — Thank You for Your Submission`;
-    const html = buildClientThankYouHtml(data, serviceType, consultation);
+    const html = buildClientThankYouHtml(data, serviceType, consultation, undefined, loeSignUrl);
 
     let attachments: EmailAttachment[] = [];
     try {
