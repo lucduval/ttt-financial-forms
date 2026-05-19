@@ -83,7 +83,7 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
                 if (cancelled) return;
                 setBrandAssociates(list);
                 const params = new URLSearchParams(window.location.search);
-                const m = params.get('m');
+                const m = params.get('marketer');
                 if (m) {
                     const slug = m.trim().toLowerCase();
                     if (/^[a-z0-9-]{1,40}$/.test(slug) && list.some(a => a.slug === slug)) {
