@@ -273,6 +273,7 @@ export async function submitTargetData(data: FormSubmitData, serviceType: string
 
     let _riivo_industry_lookup_value = data.industry || null;
     let leadData: Record<string, unknown> = {};
+    let inheritedOwnerBinding: string | null = null;
 
     if (serviceType === 'accounting') {
         const contactName = data.contactPerson || data.name || 'Unknown';
@@ -370,9 +371,10 @@ export async function submitTargetData(data: FormSubmitData, serviceType: string
                     const escaped = code.replace(/'/g, "''");
                     const lookup = await getRecords(
                         'contacts',
-                        `?$select=contactid&$filter=riivo_referralcode eq '${escaped}'&$top=1`
+                        `?$select=contactid,_owninguser_value,_owningteam_value&$filter=riivo_referralcode eq '${escaped}'&$top=1`
                     );
-                    const referrerId = lookup.success && lookup.value && lookup.value[0]?.contactid;
+                    const referrer = lookup.success && lookup.value && lookup.value[0];
+                    const referrerId = referrer?.contactid;
                     if (referrerId) {
                         const src = (data.referralSource || '').toLowerCase();
                         let referralSourceValue = 463630002; // Other
@@ -387,6 +389,16 @@ export async function submitTargetData(data: FormSubmitData, serviceType: string
                         leadData["riivo_referralcodeused"] = code;
                         leadData["riivo_referraldate"] = new Date().toISOString();
                         leadData["riivo_referralsource"] = referralSourceValue;
+
+                        const owningUserId = referrer._owninguser_value;
+                        const owningTeamId = referrer._owningteam_value;
+                        if (owningUserId) {
+                            inheritedOwnerBinding = `/systemusers(${owningUserId})`;
+                        } else if (owningTeamId) {
+                            inheritedOwnerBinding = `/teams(${owningTeamId})`;
+                        } else {
+                            console.warn(`Referrer contact ${referrerId} has no resolvable owner; falling back to service-type default.`);
+                        }
                     } else {
                         console.log(`Referral code "${code}" did not match any contact.`);
                     }
@@ -414,19 +426,23 @@ export async function submitTargetData(data: FormSubmitData, serviceType: string
             return { success: true, simulated: true };
         }
 
-        // Assign lead owner based on service type
-        const serviceOwnerEnv: Record<string, string | undefined> = {
-            tax: process.env.DYNAMICS_TAX_OWNER_ID,
-            insurance: process.env.DYNAMICS_INSURANCE_OWNER_ID,
-            advisory: process.env.DYNAMICS_ADVISORY_OWNER_ID,
-        };
-        const serviceOwnerId = serviceOwnerEnv[serviceType];
-        if (serviceOwnerId) {
-            leadData["ownerid@odata.bind"] = `/systemusers(${serviceOwnerId})`;
+        if (inheritedOwnerBinding) {
+            leadData["ownerid@odata.bind"] = inheritedOwnerBinding;
         } else {
-            const teamId = process.env.DYNAMICS_OWNER_TEAM_ID;
-            if (teamId) {
-                leadData["ownerid@odata.bind"] = `/teams(${teamId})`;
+            // Assign lead owner based on service type
+            const serviceOwnerEnv: Record<string, string | undefined> = {
+                tax: process.env.DYNAMICS_TAX_OWNER_ID,
+                insurance: process.env.DYNAMICS_INSURANCE_OWNER_ID,
+                advisory: process.env.DYNAMICS_ADVISORY_OWNER_ID,
+            };
+            const serviceOwnerId = serviceOwnerEnv[serviceType];
+            if (serviceOwnerId) {
+                leadData["ownerid@odata.bind"] = `/systemusers(${serviceOwnerId})`;
+            } else {
+                const teamId = process.env.DYNAMICS_OWNER_TEAM_ID;
+                if (teamId) {
+                    leadData["ownerid@odata.bind"] = `/teams(${teamId})`;
+                }
             }
         }
 
