@@ -136,12 +136,13 @@ export async function submitContactForm(data: {
     message: string;
 }): Promise<{ success: boolean; error?: string }> {
     const leadData: Record<string, unknown> = {
-        subject: `Website Contact — ${data.firstName} ${data.lastName}`,
         ttt_firstname: data.firstName,
         ttt_lastname: data.lastName,
         ttt_email: data.email,
         ttt_mobilephone: data.phone,
-        description: data.message,
+        riivo_notes: `Website Contact\n\n${data.message}`,
+        riivo_clienttype: 0,
+        riivo_leadtype: 100000000,
         riivo_leadsource: 463630001,
     };
 
