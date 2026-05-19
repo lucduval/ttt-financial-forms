@@ -49,7 +49,7 @@ export default function ContactFormEmbed() {
         "w-full px-4 py-3 text-sm bg-white text-slate-900 placeholder-[#A0A8B0] border-0 rounded-none focus:outline-none focus:ring-2 focus:ring-white/50";
 
     return (
-        <div className="w-full bg-[#0077BB] px-4 py-6 sm:px-6 sm:py-8">
+        <div className="w-full bg-[#0077BB]">
             {status === "success" ? (
                 <div className="flex flex-col items-center justify-center text-center gap-4 py-8 text-white">
                     <CheckCircle size={48} className="text-white" />
