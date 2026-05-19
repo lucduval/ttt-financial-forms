@@ -265,9 +265,9 @@ export async function sendContactFormTeamEmail(
     data: ContactFormData,
     dynamicsId?: string | null
 ): Promise<void> {
-    const teamAddresses = process.env.EMAIL_TEAM_ADDRESSES;
+    const teamAddresses = process.env.EMAIL_TAX_ADDRESSES || process.env.EMAIL_TEAM_ADDRESSES;
     if (!teamAddresses) {
-        console.warn("EMAIL_TEAM_ADDRESSES not set — skipping contact-form team notification.");
+        console.warn("Neither EMAIL_TAX_ADDRESSES nor EMAIL_TEAM_ADDRESSES set — skipping contact-form team notification.");
         return;
     }
     const recipients = teamAddresses.split(",").map((addr) => addr.trim()).filter(Boolean);

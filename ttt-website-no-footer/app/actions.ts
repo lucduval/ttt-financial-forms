@@ -146,8 +146,11 @@ export async function submitContactForm(data: {
         riivo_leadsource: 463630001,
     };
 
+    const taxOwnerId = process.env.DYNAMICS_TAX_OWNER_ID;
     const ownerTeamId = process.env.DYNAMICS_OWNER_TEAM_ID;
-    if (ownerTeamId) {
+    if (taxOwnerId) {
+        leadData["ownerid@odata.bind"] = `/systemusers(${taxOwnerId})`;
+    } else if (ownerTeamId) {
         leadData["ownerid@odata.bind"] = `/teams(${ownerTeamId})`;
     }
 
