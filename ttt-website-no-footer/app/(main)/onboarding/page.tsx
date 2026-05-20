@@ -10,6 +10,11 @@ export default function OnboardingPage({ hideHeader }: { hideHeader?: boolean } 
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    const service = params.get("service")?.trim().toLowerCase();
+    if (service && ["tax", "insurance", "accounting", "advisory"].includes(service)) {
+      setSelectedService(service);
+      return;
+    }
     if (params.get("ref")) {
       setSelectedService("tax");
     }
