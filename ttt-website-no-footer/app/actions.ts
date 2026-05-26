@@ -557,11 +557,6 @@ export async function signLoE(input: SignLoeInput): Promise<SignLoeResult> {
     const requiredDetails: Array<[string, string]> = [
         ["ID number", input.idNumber],
         ["Income tax number", input.taxNumber],
-        ["Bank name", input.bankName],
-        ["Account name", input.accountName],
-        ["Account type", input.accountType],
-        ["Account number", input.accountNumber],
-        ["Branch name / code", input.branchCode],
     ];
     for (const [label, value] of requiredDetails) {
         if (!value || !value.trim()) {

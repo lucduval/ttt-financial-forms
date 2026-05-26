@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { CheckCircle2, FileSignature, Eraser, ChevronDown, ChevronUp } from "lucide-react";
+import { CheckCircle2, FileSignature, Eraser, ChevronDown, ChevronUp, Info } from "lucide-react";
 import LoeTermsContent from "./LoeTermsContent";
 import { signLoE } from "../actions";
 
@@ -109,12 +109,7 @@ export default function LoeSigningForm({ leadId, token, prefill }: LoeSigningFor
 
     const detailsComplete =
         idNumber.trim().length > 0 &&
-        taxNumber.trim().length > 0 &&
-        bankName.trim().length > 0 &&
-        accountName.trim().length > 0 &&
-        accountType.trim().length > 0 &&
-        accountNumber.trim().length > 0 &&
-        branchCode.trim().length > 0;
+        taxNumber.trim().length > 0;
 
     const canSubmit = agreed && fullName.trim().length >= 2 && detailsComplete && hasSignature && !submitting;
 
@@ -293,49 +288,54 @@ export default function LoeSigningForm({ leadId, token, prefill }: LoeSigningFor
                     </div>
 
                     <div>
-                        <h3 className="text-sm font-semibold text-slate-800 mb-1">Banking details</h3>
-                        <p className="text-xs text-slate-500 mb-3">As registered with SARS (e.g. on an IRP5 or pay slip).</p>
+                        <div className="flex items-center justify-between mb-1">
+                            <h3 className="text-sm font-semibold text-slate-800">Banking details</h3>
+                            <span className="text-xs font-medium text-slate-500">Optional</span>
+                        </div>
+                        <div className="mb-3 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-slate-700">
+                            <Info size={16} className="mt-0.5 shrink-0 text-[#0077BB]" />
+                            <p>
+                                We ask for your banking details so they can be matched to your SARS profile for any potential refunds or payouts. Adding them now speeds things up — but it&apos;s optional, and we can collect them from you later if you&apos;d prefer.
+                            </p>
+                        </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label htmlFor="loe-bankname" className="block text-sm font-medium text-slate-700 mb-2">
-                                    Bank name <span className="text-red-500">*</span>
+                                    Bank name
                                 </label>
                                 <input
                                     id="loe-bankname"
                                     type="text"
                                     value={bankName}
                                     onChange={(e) => setBankName(e.target.value)}
-                                    required
                                     placeholder="e.g. Standard Bank"
                                     className="block w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0077BB] focus:border-[#0077BB] transition-colors bg-slate-50 focus:bg-white text-slate-900 sm:text-sm shadow-sm"
                                 />
                             </div>
                             <div>
                                 <label htmlFor="loe-accountname" className="block text-sm font-medium text-slate-700 mb-2">
-                                    Account name <span className="text-red-500">*</span>
+                                    Account name
                                 </label>
                                 <input
                                     id="loe-accountname"
                                     type="text"
                                     value={accountName}
                                     onChange={(e) => setAccountName(e.target.value)}
-                                    required
                                     placeholder="Name on the account"
                                     className="block w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0077BB] focus:border-[#0077BB] transition-colors bg-slate-50 focus:bg-white text-slate-900 sm:text-sm shadow-sm"
                                 />
                             </div>
                             <div>
                                 <label htmlFor="loe-accounttype" className="block text-sm font-medium text-slate-700 mb-2">
-                                    Account type <span className="text-red-500">*</span>
+                                    Account type
                                 </label>
                                 <select
                                     id="loe-accounttype"
                                     value={accountType}
                                     onChange={(e) => setAccountType(e.target.value)}
-                                    required
                                     className="block w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0077BB] focus:border-[#0077BB] transition-colors bg-slate-50 focus:bg-white text-slate-900 sm:text-sm shadow-sm appearance-none"
                                 >
-                                    <option value="" disabled>Select account type</option>
+                                    <option value="">Select account type</option>
                                     <option value="Cheque">Cheque / Current</option>
                                     <option value="Savings">Savings</option>
                                     <option value="Transmission">Transmission</option>
@@ -345,14 +345,13 @@ export default function LoeSigningForm({ leadId, token, prefill }: LoeSigningFor
                             </div>
                             <div>
                                 <label htmlFor="loe-accountnumber" className="block text-sm font-medium text-slate-700 mb-2">
-                                    Account number <span className="text-red-500">*</span>
+                                    Account number
                                 </label>
                                 <input
                                     id="loe-accountnumber"
                                     type="text"
                                     value={accountNumber}
                                     onChange={(e) => setAccountNumber(e.target.value)}
-                                    required
                                     inputMode="numeric"
                                     placeholder="Account number"
                                     className="block w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0077BB] focus:border-[#0077BB] transition-colors bg-slate-50 focus:bg-white text-slate-900 sm:text-sm shadow-sm"
@@ -360,14 +359,13 @@ export default function LoeSigningForm({ leadId, token, prefill }: LoeSigningFor
                             </div>
                             <div className="sm:col-span-2">
                                 <label htmlFor="loe-branchcode" className="block text-sm font-medium text-slate-700 mb-2">
-                                    Branch name / code <span className="text-red-500">*</span>
+                                    Branch name / code
                                 </label>
                                 <input
                                     id="loe-branchcode"
                                     type="text"
                                     value={branchCode}
                                     onChange={(e) => setBranchCode(e.target.value)}
-                                    required
                                     placeholder="e.g. Universal — 051001"
                                     className="block w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0077BB] focus:border-[#0077BB] transition-colors bg-slate-50 focus:bg-white text-slate-900 sm:text-sm shadow-sm"
                                 />

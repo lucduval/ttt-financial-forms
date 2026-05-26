@@ -171,11 +171,11 @@ export async function buildSignedLoePdf(
     drawRow("Signatory:", metadata.fullName);
     drawRow("ID number:", metadata.idNumber);
     drawRow("Income tax number:", metadata.taxNumber);
-    drawRow("Bank name:", metadata.bankName);
-    drawRow("Account name:", metadata.accountName);
-    drawRow("Account type:", metadata.accountType);
-    drawRow("Account number:", metadata.accountNumber);
-    drawRow("Branch name / code:", metadata.branchCode);
+    drawRow("Bank name:", metadata.bankName || "Not provided");
+    drawRow("Account name:", metadata.accountName || "Not provided");
+    drawRow("Account type:", metadata.accountType || "Not provided");
+    drawRow("Account number:", metadata.accountNumber || "Not provided");
+    drawRow("Branch name / code:", metadata.branchCode || "Not provided");
     drawRow("Signed at (UTC):", metadata.signedAtIso);
     drawRow("Signed at (SAST):", metadata.signedAtDisplay);
     drawRow("Reference ID:", metadata.referenceId);
