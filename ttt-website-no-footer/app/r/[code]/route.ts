@@ -13,7 +13,7 @@ export async function GET(
     const signupUrl = `https://www.ttt-tax.co.za/client-onboarding/?ref=${code}`;
 
     const tinaNumber = process.env.TTT_WHATSAPP_NUMBER;
-    const tinaPrompt = "I'd like to know more about the referral";
+    const tinaPrompt = `I'd like to know more about the referral (code: ${code})`;
     const tinaUrl = `https://wa.me/${tinaNumber}?text=${encodeURIComponent(tinaPrompt)}`;
 
     const shareMessage =
