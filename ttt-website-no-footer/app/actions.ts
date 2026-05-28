@@ -43,7 +43,7 @@ export async function getBrandAssociates(): Promise<{ slug: string; displayName:
         }
         const res = await getRecords(
             'systemusers',
-            "?$select=firstname&$filter=jobtitle eq 'Brand Associate' and isdisabled eq false"
+            "?$select=firstname&$filter=contains(jobtitle,'Brand Associate') and isdisabled eq false"
         );
         if (!res.success || !res.value) return [];
         const seen = new Set<string>();
@@ -118,7 +118,7 @@ async function resolveMarketerSystemUserId(rawSlug: string): Promise<string | nu
     const escaped = slug.replace(/'/g, "''");
     const lookup = await getRecords(
         'systemusers',
-        `?$select=systemuserid&$filter=jobtitle eq 'Brand Associate' and isdisabled eq false and tolower(firstname) eq '${escaped}'&$top=2`
+        `?$select=systemuserid&$filter=contains(jobtitle,'Brand Associate') and isdisabled eq false and firstname eq '${escaped}'&$top=2`
     );
     const matches = lookup.success && lookup.value ? lookup.value : [];
     if (matches.length === 1) {
