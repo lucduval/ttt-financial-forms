@@ -17,8 +17,9 @@ export async function GET(
     const tinaUrl = `https://wa.me/${tinaNumber}?text=${encodeURIComponent(tinaPrompt)}`;
 
     const shareMessage =
-        `Hey! I use TTT for my tax and they're great. ` +
-        `Sign up with my code ${code}: ${signupUrl}\n\n` +
+        `Hey! I use TTT for my tax and they're great.\n` +
+        `Use my code ${code} when you sign up:\n\n` +
+        `${signupUrl}\n\n` +
         `Questions? Chat to TTT's assistant Tina: ${tinaUrl}`;
 
     const waUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
