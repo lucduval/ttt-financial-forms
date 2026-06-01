@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import { after } from "next/server";
 import { createRecord, updateRecord, getRecords, uploadFileColumn } from "./lib/dynamics";
 import {
     sendTeamNotificationEmail,
@@ -8,6 +9,7 @@ import {
     sendSignedLoeEmails,
     sendContactFormTeamEmail,
 } from "./lib/email";
+import { notifyBotLoeSigned } from "./lib/loe-activation-webhook";
 import { mintLoeToken, verifyLoeToken } from "./lib/loe-token";
 import {
     buildReferenceId,
@@ -743,6 +745,8 @@ export async function signLoE(input: SignLoeInput): Promise<SignLoeResult> {
     } catch (err) {
         console.warn("Failed to upload signed LoE to riivo_signedletterofengagement (annotation already saved):", err);
     }
+
+    after(() => notifyBotLoeSigned(input.leadId));
 
     try {
         const crmBaseUrl = process.env.DYNAMICS_RESOURCE_URL?.replace(/\/$/, "") || "";
