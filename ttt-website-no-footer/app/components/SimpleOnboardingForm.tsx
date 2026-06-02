@@ -216,7 +216,7 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
                     </div>
                     <h2 className="text-2xl font-bold text-slate-800 mb-2">Thank You!</h2>
                     <p className="text-slate-600 mb-2">
-                        Your {serviceType} inquiry has been successfully submitted.
+                        Your {serviceType} enquiry has been successfully submitted.
                     </p>
                     <p className="text-slate-500 text-sm mb-8">
                         Our team will review your message and be in touch shortly. You will receive a confirmation email at <span className="font-medium text-slate-700">{formData.email}</span>.
@@ -414,7 +414,7 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
                             {brandAssociatesLoaded && brandAssociates.length > 0 && (
                                 <div>
                                     <label htmlFor="marketerSlug" className="block text-sm font-medium text-slate-700 mb-2">
-                                        {marketerFromLink ? 'Your TTT Brand Associate' : 'Referred by a TTT Brand Associate? (optional)'}
+                                        {marketerFromLink ? 'Your TTT Business Associate' : 'Referred by a TTT Business Associate? (optional)'}
                                     </label>
                                     <div className="relative">
                                         <div className="absolute top-3 left-3 pointer-events-none text-slate-400">
@@ -478,7 +478,7 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
                                 className="px-6 py-2.5 bg-[#0077BB] hover:bg-[#0066a1] text-white font-semibold rounded-lg shadow-lg shadow-blue-900/20 hover:shadow-xl hover:shadow-blue-900/30 transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-2 ml-auto min-h-[44px] w-full sm:w-auto"
                             >
                                 <Send size={18} />
-                                {loading ? 'Submitting...' : 'Submit Inquiry'}
+                                {loading ? 'Submitting...' : 'Submit Enquiry'}
                             </button>
                         </div>
                     </div>
