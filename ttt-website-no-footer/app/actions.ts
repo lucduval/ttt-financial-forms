@@ -110,7 +110,7 @@ async function findDuplicateLead(rawEmail: string): Promise<DuplicateLookupResul
     return matched ? { isDuplicate: true, referralCodeOnFile } : { isDuplicate: false };
 }
 
-async function resolveMarketerSystemUserId(rawSlug: string): Promise<string | null> {
+async function resolveMarketer(rawSlug: string): Promise<{ id: string; email: string | null } | null> {
     const slug = rawSlug.trim().toLowerCase();
     if (!slug || !MARKETER_SLUG_RE.test(slug)) {
         console.warn(`Marketer slug "${rawSlug}" failed validation — skipping attribution.`);
@@ -120,14 +120,34 @@ async function resolveMarketerSystemUserId(rawSlug: string): Promise<string | nu
     const escaped = slug.replace(/'/g, "''");
     const lookup = await getRecords(
         'systemusers',
-        `?$select=systemuserid&$filter=contains(jobtitle,'Brand Associate') and isdisabled eq false and firstname eq '${escaped}'&$top=2`
+        `?$select=systemuserid,internalemailaddress&$filter=contains(jobtitle,'Brand Associate') and isdisabled eq false and firstname eq '${escaped}'&$top=2`
     );
     const matches = lookup.success && lookup.value ? lookup.value : [];
     if (matches.length === 1) {
-        return matches[0].systemuserid;
+        const email = typeof matches[0].internalemailaddress === 'string' ? matches[0].internalemailaddress.trim() : '';
+        return { id: matches[0].systemuserid, email: email || null };
     }
     console.warn(`Marketer slug "${slug}" matched ${matches.length} brand associates — skipping attribution.`);
     return null;
+}
+
+// Fetch a system user's email by id — used to direct notifications to the
+// business associate attributed to a lead. Best-effort: never throws.
+async function getSystemUserEmail(systemUserId: string): Promise<string | null> {
+    if (!systemUserId || !GUID_RE.test(systemUserId)) return null;
+    if (!process.env.DYNAMICS_CLIENT_ID) return null;
+    try {
+        const res = await getRecords(
+            'systemusers',
+            `?$select=internalemailaddress&$filter=systemuserid eq ${systemUserId}`
+        );
+        const row = res.success && res.value && res.value[0];
+        const email = row && typeof row.internalemailaddress === 'string' ? row.internalemailaddress.trim() : '';
+        return email || null;
+    } catch (err) {
+        console.error("Failed to fetch system user email:", err);
+        return null;
+    }
 }
 
 export async function submitContactForm(data: {
@@ -411,11 +431,13 @@ export async function submitTargetData(data: FormSubmitData, serviceType: string
         }
     }
 
+    let marketerEmail: string | null = null;
     if (data.marketerSlug) {
         try {
-            const marketerId = await resolveMarketerSystemUserId(data.marketerSlug);
-            if (marketerId) {
-                leadData["riivo_Marketer@odata.bind"] = `/systemusers(${marketerId})`;
+            const marketer = await resolveMarketer(data.marketerSlug);
+            if (marketer) {
+                leadData["riivo_Marketer@odata.bind"] = `/systemusers(${marketer.id})`;
+                marketerEmail = marketer.email;
             }
         } catch (err) {
             console.error("Marketer slug lookup failed:", err);
@@ -508,7 +530,7 @@ export async function submitTargetData(data: FormSubmitData, serviceType: string
         if (options?.sendEmails !== false) {
             try {
                 await Promise.all([
-                    sendTeamNotificationEmail(data, serviceType, dynamicsId),
+                    sendTeamNotificationEmail(data, serviceType, dynamicsId, marketerEmail),
                     sendClientThankYouEmail(data, serviceType, null, loeSignUrl),
                 ]);
                 console.log("Emails sent successfully.");
@@ -588,6 +610,7 @@ export async function signLoE(input: SignLoeInput): Promise<SignLoeResult> {
     let leadPhone = "";
     let leadAddress = "";
     let leadIndustry = "";
+    let marketerId = "";
     let crmName = input.fullName.trim();
     try {
         const selectFields = [
@@ -603,6 +626,7 @@ export async function signLoE(input: SignLoeInput): Promise<SignLoeResult> {
             "riivo_city",
             "riivo_province",
             "riivo_zippostalcode",
+            "_riivo_marketer_value",
         ].join(",");
         const res = await getRecords(
             "new_leads",
@@ -621,6 +645,7 @@ export async function signLoE(input: SignLoeInput): Promise<SignLoeResult> {
             .filter(Boolean)
             .join(", ");
         leadIndustry = row.riivo_Industry_lookup?.riivo_industry || row.riivo_otherindustry || "";
+        marketerId = typeof row._riivo_marketer_value === 'string' ? row._riivo_marketer_value : "";
         const dynamicsName = [row.ttt_firstname, row.ttt_lastname].filter(Boolean).join(" ").trim();
         if (dynamicsName) crmName = dynamicsName;
     } catch (err) {
@@ -753,6 +778,7 @@ export async function signLoE(input: SignLoeInput): Promise<SignLoeResult> {
         const crmLink = crmBaseUrl
             ? `${crmBaseUrl}/main.aspx?pagetype=entityrecord&etn=new_lead&id=${input.leadId}`
             : "";
+        const marketerEmail = marketerId ? await getSystemUserEmail(marketerId) : null;
         await sendSignedLoeEmails({
             clientEmail: leadEmail,
             clientName: crmName,
@@ -761,6 +787,7 @@ export async function signLoE(input: SignLoeInput): Promise<SignLoeResult> {
             signedPdfBase64,
             signedPdfFilename: signedFilename,
             crmLink,
+            teamRecipientOverride: marketerEmail,
         });
     } catch (err) {
         console.error("Failed to send signed LoE emails:", err);

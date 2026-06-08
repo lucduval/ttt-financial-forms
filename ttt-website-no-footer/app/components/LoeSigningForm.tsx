@@ -210,6 +210,18 @@ export default function LoeSigningForm({ leadId, token, prefill }: LoeSigningFor
                         {termsExpanded && (
                             <div id="loe-terms-content" className="border-t border-slate-200 p-4 sm:p-6">
                                 <LoeTermsContent />
+
+                                <label className="mt-6 flex items-start gap-3 p-3 rounded-lg border border-slate-200 bg-white cursor-pointer hover:bg-slate-50 transition-colors">
+                                    <input
+                                        type="checkbox"
+                                        checked={optOutMarketing}
+                                        onChange={(e) => setOptOutMarketing(e.target.checked)}
+                                        className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#0077BB] focus:ring-[#0077BB]"
+                                    />
+                                    <span className="text-sm text-slate-700">
+                                        <span className="font-medium">Opt out</span> of marketing about beneficial and related services from TTT Financial Group (clause 11.2).
+                                    </span>
+                                </label>
                             </div>
                         )}
                     </div>
@@ -223,18 +235,6 @@ export default function LoeSigningForm({ leadId, token, prefill }: LoeSigningFor
                         />
                         <span className="text-sm text-slate-700">
                             I have read, understood, and agree to the Letter of Engagement and the Standard Terms and Conditions above. I am entering into this agreement of my own free will.
-                        </span>
-                    </label>
-
-                    <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 bg-white cursor-pointer hover:bg-slate-50 transition-colors">
-                        <input
-                            type="checkbox"
-                            checked={optOutMarketing}
-                            onChange={(e) => setOptOutMarketing(e.target.checked)}
-                            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#0077BB] focus:ring-[#0077BB]"
-                        />
-                        <span className="text-sm text-slate-700">
-                            <span className="font-medium">Opt out</span> of marketing about beneficial and related services from TTT Financial Group (clause 11.2).
                         </span>
                     </label>
 

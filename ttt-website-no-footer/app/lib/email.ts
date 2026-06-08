@@ -141,20 +141,27 @@ async function sendEmail(
 export async function sendTeamNotificationEmail(
     data: EmailData,
     serviceType: string,
-    dynamicsId?: string | null
+    dynamicsId?: string | null,
+    recipientOverride?: string | null
 ): Promise<void> {
-    const serviceEnv: Record<string, string | undefined> = {
-        tax: process.env.EMAIL_TAX_ADDRESSES,
-        insurance: process.env.EMAIL_INSURANCE_ADDRESSES,
-        advisory: process.env.EMAIL_ADVISORY_ADDRESSES,
-    };
-    const teamAddresses = serviceEnv[serviceType] || process.env.EMAIL_TEAM_ADDRESSES;
-    if (!teamAddresses) {
-        console.warn(`No recipient list set for service "${serviceType}" — skipping team notification.`);
-        return;
+    // When a business associate is attributed to the lead, direct the
+    // notification to their CRM email instead of the default team list.
+    let recipients: string[];
+    if (recipientOverride && recipientOverride.trim()) {
+        recipients = [recipientOverride.trim()];
+    } else {
+        const serviceEnv: Record<string, string | undefined> = {
+            tax: process.env.EMAIL_TAX_ADDRESSES,
+            insurance: process.env.EMAIL_INSURANCE_ADDRESSES,
+            advisory: process.env.EMAIL_ADVISORY_ADDRESSES,
+        };
+        const teamAddresses = serviceEnv[serviceType] || process.env.EMAIL_TEAM_ADDRESSES;
+        if (!teamAddresses) {
+            console.warn(`No recipient list set for service "${serviceType}" — skipping team notification.`);
+            return;
+        }
+        recipients = teamAddresses.split(",").map((addr) => addr.trim()).filter(Boolean);
     }
-
-    const recipients = teamAddresses.split(",").map((addr) => addr.trim()).filter(Boolean);
     if (recipients.length === 0) return;
 
     const clientName = data.contactPerson || data.name || "Unknown";
@@ -172,6 +179,7 @@ export async function sendSignedLoeEmails(params: {
     signedPdfBase64: string;
     signedPdfFilename: string;
     crmLink?: string;
+    teamRecipientOverride?: string | null;
 }): Promise<void> {
     const branding = getServiceBranding("tax");
     const attachment: EmailAttachment = {
@@ -242,7 +250,11 @@ export async function sendSignedLoeEmails(params: {
         );
     }
 
-    const teamAddresses = process.env.EMAIL_TAX_ADDRESSES;
+    // Direct to the attributed business associate's email when present,
+    // otherwise fall back to the default tax team list.
+    const teamAddresses = (params.teamRecipientOverride && params.teamRecipientOverride.trim())
+        ? params.teamRecipientOverride.trim()
+        : process.env.EMAIL_TAX_ADDRESSES;
     if (teamAddresses) {
         const recipients = teamAddresses.split(",").map((addr) => addr.trim()).filter(Boolean);
         if (recipients.length > 0) {
