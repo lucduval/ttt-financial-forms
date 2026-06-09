@@ -144,31 +144,31 @@ export async function sendTeamNotificationEmail(
     dynamicsId?: string | null,
     recipientOverride?: string | null
 ): Promise<void> {
-    // When a business associate is attributed to the lead, direct the
-    // notification to their CRM email instead of the default team list.
-    let recipients: string[];
+    // Always notify the service/team list; when a business associate is
+    // attributed to the lead, also notify their CRM email.
+    const serviceEnv: Record<string, string | undefined> = {
+        tax: process.env.EMAIL_TAX_ADDRESSES,
+        insurance: process.env.EMAIL_INSURANCE_ADDRESSES,
+        advisory: process.env.EMAIL_ADVISORY_ADDRESSES,
+    };
+    const teamAddresses = serviceEnv[serviceType] || process.env.EMAIL_TEAM_ADDRESSES;
+    const recipients = (teamAddresses || "").split(",").map((addr) => addr.trim()).filter(Boolean);
     if (recipientOverride && recipientOverride.trim()) {
-        recipients = [recipientOverride.trim()];
-    } else {
-        const serviceEnv: Record<string, string | undefined> = {
-            tax: process.env.EMAIL_TAX_ADDRESSES,
-            insurance: process.env.EMAIL_INSURANCE_ADDRESSES,
-            advisory: process.env.EMAIL_ADVISORY_ADDRESSES,
-        };
-        const teamAddresses = serviceEnv[serviceType] || process.env.EMAIL_TEAM_ADDRESSES;
-        if (!teamAddresses) {
-            console.warn(`No recipient list set for service "${serviceType}" — skipping team notification.`);
-            return;
-        }
-        recipients = teamAddresses.split(",").map((addr) => addr.trim()).filter(Boolean);
+        recipients.push(recipientOverride.trim());
     }
-    if (recipients.length === 0) return;
+    const deduped = Array.from(new Set(recipients.map((r) => r.toLowerCase())))
+        .map((lower) => recipients.find((r) => r.toLowerCase() === lower)!)
+        .filter(Boolean);
+    if (deduped.length === 0) {
+        console.warn(`No recipient list set for service "${serviceType}" — skipping team notification.`);
+        return;
+    }
 
     const clientName = data.contactPerson || data.name || "Unknown";
     const subject = `New ${serviceType.charAt(0).toUpperCase() + serviceType.slice(1)} Lead — ${clientName}`;
     const html = buildTeamNotificationHtml(data, serviceType, dynamicsId);
 
-    await sendEmail(recipients, subject, html, data.email);
+    await sendEmail(deduped, subject, html, data.email);
 }
 
 export async function sendSignedLoeEmails(params: {
@@ -250,13 +250,17 @@ export async function sendSignedLoeEmails(params: {
         );
     }
 
-    // Direct to the attributed business associate's email when present,
-    // otherwise fall back to the default tax team list.
-    const teamAddresses = (params.teamRecipientOverride && params.teamRecipientOverride.trim())
-        ? params.teamRecipientOverride.trim()
-        : process.env.EMAIL_TAX_ADDRESSES;
-    if (teamAddresses) {
-        const recipients = teamAddresses.split(",").map((addr) => addr.trim()).filter(Boolean);
+    // Always notify the default tax team list; when a business associate is
+    // attributed, also notify their CRM email.
+    const teamRecipients = (process.env.EMAIL_TAX_ADDRESSES || "")
+        .split(",").map((addr) => addr.trim()).filter(Boolean);
+    if (params.teamRecipientOverride && params.teamRecipientOverride.trim()) {
+        teamRecipients.push(params.teamRecipientOverride.trim());
+    }
+    {
+        const recipients = Array.from(new Set(teamRecipients.map((r) => r.toLowerCase())))
+            .map((lower) => teamRecipients.find((r) => r.toLowerCase() === lower)!)
+            .filter(Boolean);
         if (recipients.length > 0) {
             tasks.push(
                 sendEmail(

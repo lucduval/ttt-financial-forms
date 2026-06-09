@@ -432,11 +432,13 @@ export async function submitTargetData(data: FormSubmitData, serviceType: string
     }
 
     let marketerEmail: string | null = null;
+    let marketerOwnerBinding: string | null = null;
     if (data.marketerSlug) {
         try {
             const marketer = await resolveMarketer(data.marketerSlug);
             if (marketer) {
                 leadData["riivo_Marketer@odata.bind"] = `/systemusers(${marketer.id})`;
+                marketerOwnerBinding = `/systemusers(${marketer.id})`;
                 marketerEmail = marketer.email;
             }
         } catch (err) {
@@ -450,7 +452,11 @@ export async function submitTargetData(data: FormSubmitData, serviceType: string
             return { success: true, simulated: true };
         }
 
-        if (inheritedOwnerBinding) {
+        if (marketerOwnerBinding) {
+            // The attributed business associate owns the lead; the referrer's
+            // inherited owner and the service-type default act as fallbacks.
+            leadData["ownerid@odata.bind"] = marketerOwnerBinding;
+        } else if (inheritedOwnerBinding) {
             leadData["ownerid@odata.bind"] = inheritedOwnerBinding;
         } else {
             // Assign lead owner based on service type
