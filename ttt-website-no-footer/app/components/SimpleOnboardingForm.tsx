@@ -43,8 +43,10 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
     }, []);
 
     const [industries, setIndustries] = useState<{ id: string; name: string }[]>([]);
-    const [brandAssociates, setBrandAssociates] = useState<{ slug: string; displayName: string }[]>([]);
-    const [brandAssociatesLoaded, setBrandAssociatesLoaded] = useState(false);
+    // Only ever set from a ?marketer= magic link. A visitor who lands on the form
+    // without one cannot pick a business associate, so every marketer-attributed
+    // lead is unambiguously Magic Link attribution.
+    const [linkedMarketer, setLinkedMarketer] = useState<{ slug: string; displayName: string } | null>(null);
 
     useEffect(() => {
         getIndustries().then(setIndustries).catch(console.error);
@@ -63,7 +65,6 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
         files: [] as { name: string, content: string, type: string }[]
     });
     const [referralFromLink, setReferralFromLink] = useState(false);
-    const [marketerFromLink, setMarketerFromLink] = useState(false);
 
     useEffect(() => {
         if (serviceType !== 'tax') return;
@@ -77,25 +78,22 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
     }, [serviceType]);
 
     useEffect(() => {
+        const m = new URLSearchParams(window.location.search).get('marketer');
+        const slug = (m || '').trim().toLowerCase();
+        // No magic link, no lookup — the roster is only needed to resolve the
+        // linked associate's display name and to validate the slug.
+        if (!slug || !/^[a-z0-9-]{1,40}$/.test(slug)) return;
+
         let cancelled = false;
         getBrandAssociates()
             .then(list => {
                 if (cancelled) return;
-                setBrandAssociates(list);
-                const params = new URLSearchParams(window.location.search);
-                const m = params.get('marketer');
-                if (m) {
-                    const slug = m.trim().toLowerCase();
-                    if (/^[a-z0-9-]{1,40}$/.test(slug) && list.some(a => a.slug === slug)) {
-                        setFormData(prev => ({ ...prev, marketerSlug: slug }));
-                        setMarketerFromLink(true);
-                    }
-                }
+                const match = list.find(a => a.slug === slug);
+                if (!match) return;
+                setLinkedMarketer(match);
+                setFormData(prev => ({ ...prev, marketerSlug: match.slug }));
             })
-            .catch(console.error)
-            .finally(() => {
-                if (!cancelled) setBrandAssociatesLoaded(true);
-            });
+            .catch(console.error);
         return () => { cancelled = true; };
     }, []);
 
@@ -255,9 +253,10 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
                         <button
                             onClick={() => {
                                 setSubmitted(false);
-                                setFormData({ clientType: '', name: '', email: '', phone: '', industry: '', referralCode: '', referralSource: '', marketerSlug: '', message: '', files: [] });
+                                // The magic link is still in the address bar, so a second
+                                // application from the same page keeps its attribution.
+                                setFormData({ clientType: '', name: '', email: '', phone: '', industry: '', referralCode: '', referralSource: '', marketerSlug: linkedMarketer?.slug || '', message: '', files: [] });
                                 setReferralFromLink(false);
-                                setMarketerFromLink(false);
                                 setLoeLeadId(null);
                                 setLoeToken(null);
                                 setLoeDeferred(false);
@@ -411,32 +410,26 @@ export default function SimpleOnboardingForm({ serviceType, onBack }: SimpleOnbo
                                 </div>
                             )}
 
-                            {brandAssociatesLoaded && brandAssociates.length > 0 && (
+                            {linkedMarketer && (
                                 <div>
                                     <label htmlFor="marketerSlug" className="block text-sm font-medium text-slate-700 mb-2">
-                                        {marketerFromLink ? 'Your TTT Business Associate' : 'Referred by a TTT Business Associate? (optional)'}
+                                        Your TTT Business Associate
                                     </label>
                                     <div className="relative">
                                         <div className="absolute top-3 left-3 pointer-events-none text-slate-400">
                                             <User size={18} />
                                         </div>
-                                        <select
+                                        <input
+                                            type="text"
                                             id="marketerSlug"
-                                            name="marketerSlug"
-                                            value={formData.marketerSlug}
-                                            onChange={handleInputChange}
-                                            disabled={marketerFromLink}
-                                            className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0077BB] focus:border-[#0077BB] transition-colors bg-slate-50 focus:bg-white text-slate-900 sm:text-sm shadow-sm appearance-none disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed"
-                                        >
-                                            <option value="">{marketerFromLink ? '' : 'Select (optional)'}</option>
-                                            {brandAssociates.map(a => (
-                                                <option key={a.slug} value={a.slug}>{a.displayName}</option>
-                                            ))}
-                                        </select>
+                                            value={linkedMarketer.displayName}
+                                            readOnly
+                                            aria-readonly="true"
+                                            tabIndex={-1}
+                                            className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg bg-slate-100 text-slate-700 sm:text-sm shadow-sm cursor-not-allowed"
+                                        />
                                     </div>
-                                    {marketerFromLink && (
-                                        <p className="mt-1 text-xs text-[#0077BB]">Linked from your invitation.</p>
-                                    )}
+                                    <p className="mt-1 text-xs text-[#0077BB]">Linked from your invitation.</p>
                                 </div>
                             )}
 

@@ -67,6 +67,53 @@ export async function getBrandAssociates(): Promise<{ slug: string; displayName:
 
 const MARKETER_SLUG_RE = /^[a-z0-9-]{1,40}$/;
 
+// riivo_leadsources (global optionset) — the three website routes. Which one a
+// lead gets is derived from field presence exactly the way the Lead Source
+// dashboard derives it (a referrer wins ties), so the picklist and the derived
+// route can never disagree.
+const LEAD_SOURCE_WEBSITE = 463630001;          // Website (direct)
+const LEAD_SOURCE_REFER_AND_EARN = 463630006;   // Website - Refer & Earn
+const LEAD_SOURCE_TAX_CONSULTANT = 463630007;   // Website - Tax Consultant
+
+// riivo_marketerattribution (local optionset on new_lead). The form only ever
+// attributes a marketer from a magic link — there is no way to pick one by hand
+// on the site — so it never writes Added Manually. That value is reserved for
+// staff attaching a marketer in the CRM after the fact.
+const MARKETER_ATTRIBUTION_MAGIC_LINK = 463630000;
+
+// Columns and values that only exist once the lead-source schema has been
+// imported into the environment. Until then Dataverse 400s on them, so a write
+// that trips on one is retried with the pre-instrumentation payload rather than
+// failing the visitor's submission.
+const ATTRIBUTION_SCHEMA_FIELDS = ['riivo_marketerattribution', 'riivo_marketerseton', 'riivo_leadsource'];
+
+function isAttributionSchemaError(err: unknown): boolean {
+    const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
+    return ATTRIBUTION_SCHEMA_FIELDS.some(field => msg.includes(field));
+}
+
+async function saveLead(leadData: Record<string, unknown>, existingLeadId?: string): Promise<string | null> {
+    const write = async () => {
+        if (existingLeadId) {
+            await updateRecord('new_leads', existingLeadId, leadData);
+            return existingLeadId;
+        }
+        const result = await createRecord('new_leads', leadData);
+        return result.id;
+    };
+
+    try {
+        return await write();
+    } catch (err) {
+        if (!isAttributionSchemaError(err)) throw err;
+        console.warn("Lead-source schema not present in this environment — retrying without the attribution fields.");
+        delete leadData.riivo_marketerattribution;
+        delete leadData.riivo_marketerseton;
+        leadData.riivo_leadsource = LEAD_SOURCE_WEBSITE;
+        return await write();
+    }
+}
+
 type DuplicateLookupResult = { isDuplicate: false } | { isDuplicate: true; referralCodeOnFile: string | null };
 
 async function findDuplicateLead(rawEmail: string): Promise<DuplicateLookupResult> {
@@ -165,7 +212,7 @@ export async function submitContactForm(data: {
         riivo_notes: `Website Contact\n\n${data.message}`,
         riivo_clienttype: 0,
         riivo_leadtype: 100000000,
-        riivo_leadsource: 463630001,
+        riivo_leadsource: LEAD_SOURCE_WEBSITE,
     };
 
     const taxOwnerId = process.env.DYNAMICS_TAX_OWNER_ID;
@@ -279,7 +326,9 @@ export async function submitTargetData(data: FormSubmitData, serviceType: string
     let description = `Service Type: ${serviceType}\n\n`;
 
     const riivo_clienttype = data.clientType !== undefined ? data.clientType : 0;
-    const riivo_leadsource = 463630001;
+    // Provisional — re-stamped below once the referrer and marketer lookups have
+    // resolved, since only then is the route known.
+    const riivo_leadsource = LEAD_SOURCE_WEBSITE;
     let riivo_leadtype = 100000000;
 
     const st = serviceType.toLowerCase();
@@ -446,6 +495,25 @@ export async function submitTargetData(data: FormSubmitData, serviceType: string
         }
     }
 
+    // Lead-source attribution. A resolved referrer wins ties, matching the
+    // dashboard's precedence; an unmatched referral code leaves the lead direct.
+    if (leadData["riivo_Referrer@odata.bind"]) {
+        leadData.riivo_leadsource = LEAD_SOURCE_REFER_AND_EARN;
+    } else if (leadData["riivo_Marketer@odata.bind"]) {
+        leadData.riivo_leadsource = LEAD_SOURCE_TAX_CONSULTANT;
+    } else {
+        leadData.riivo_leadsource = LEAD_SOURCE_WEBSITE;
+    }
+
+    if (leadData["riivo_Marketer@odata.bind"]) {
+        leadData.riivo_marketerattribution = MARKETER_ATTRIBUTION_MAGIC_LINK;
+        // "When the marketer lookup was FIRST populated" — creation only, so the
+        // two-step accounting flow's update pass cannot overwrite it.
+        if (!options?.existingLeadId) {
+            leadData.riivo_marketerseton = new Date().toISOString();
+        }
+    }
+
     try {
         if (!process.env.DYNAMICS_CLIENT_ID) {
             console.warn("Dynamics credentials not found. simulating success.");
@@ -480,13 +548,11 @@ export async function submitTargetData(data: FormSubmitData, serviceType: string
 
         if (options?.existingLeadId) {
             console.log("Updating existing Lead in Dynamics:", options.existingLeadId);
-            await updateRecord('new_leads', options.existingLeadId, leadData);
-            dynamicsId = options.existingLeadId;
+            dynamicsId = await saveLead(leadData, options.existingLeadId);
             console.log("Lead updated with ID:", dynamicsId);
         } else {
             console.log("Creating Lead in Dynamics...");
-            const result = await createRecord('new_leads', leadData);
-            dynamicsId = result.id;
+            dynamicsId = await saveLead(leadData);
             console.log("Lead created with ID:", dynamicsId);
         }
 
