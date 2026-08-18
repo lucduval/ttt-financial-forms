@@ -21,7 +21,7 @@ const navLinks = [
     ],
   },
   { label: "OUTREACH", href: "/outreach" },
-  { label: "TAX CALCULATOR", href: "/tax-calculator" },
+  { label: "CALCULATORS", href: "/calculators" },
   { label: "CONTACT", href: "/contact" },
   { label: "NEWSROOM", href: "/newsroom" },
 ];
