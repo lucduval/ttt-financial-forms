@@ -32,8 +32,24 @@ const TAX_DATA: Record<
     brackets: { limit: number; rate: number; base: number }[];
     rebates: { primary: number; secondary: number; tertiary: number };
     medical: { main: number; firstDep: number; additional: number };
+    retirementCap: number;
   }
 > = {
+  "2027": {
+    label: "2027 (Mar 2026 \u2013 Feb 2027)",
+    brackets: [
+      { limit: 245100, rate: 0.18, base: 0 },
+      { limit: 383100, rate: 0.26, base: 44118 },
+      { limit: 530200, rate: 0.31, base: 79998 },
+      { limit: 695800, rate: 0.36, base: 125599 },
+      { limit: 887000, rate: 0.39, base: 185215 },
+      { limit: 1878600, rate: 0.41, base: 259783 },
+      { limit: Infinity, rate: 0.45, base: 666339 },
+    ],
+    rebates: { primary: 17820, secondary: 9765, tertiary: 3249 },
+    medical: { main: 376, firstDep: 376, additional: 254 },
+    retirementCap: 430000,
+  },
   "2026": {
     label: "2026 (Mar 2025 – Feb 2026)",
     brackets: [
@@ -47,6 +63,7 @@ const TAX_DATA: Record<
     ],
     rebates: { primary: 17235, secondary: 9444, tertiary: 3145 },
     medical: { main: 364, firstDep: 364, additional: 246 },
+    retirementCap: 350000,
   },
   "2025": {
     label: "2025 (Mar 2024 – Feb 2025)",
@@ -61,6 +78,7 @@ const TAX_DATA: Record<
     ],
     rebates: { primary: 17235, secondary: 9444, tertiary: 3145 },
     medical: { main: 364, firstDep: 364, additional: 246 },
+    retirementCap: 350000,
   },
   "2024": {
     label: "2024 (Mar 2023 – Feb 2024)",
@@ -75,6 +93,7 @@ const TAX_DATA: Record<
     ],
     rebates: { primary: 16425, secondary: 9000, tertiary: 2997 },
     medical: { main: 364, firstDep: 364, additional: 246 },
+    retirementCap: 350000,
   },
 };
 
@@ -89,10 +108,10 @@ function calculateAnnualTax(
   taxYear: string,
   medAidMembers: number
 ) {
-  const { brackets, rebates, medical } = TAX_DATA[taxYear];
+  const { brackets, rebates, medical, retirementCap } = TAX_DATA[taxYear];
 
   const retirementCapPct = annualGross * 0.275;
-  const retirementCapFixed = 350000;
+  const retirementCapFixed = retirementCap;
   const allowableRetirement = Math.min(
     annualRetirementInput,
     retirementCapPct,
@@ -281,7 +300,7 @@ function SmartAdvice({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function TaxCalculatorPage({ noBg, noHeader }: { noBg?: boolean; noHeader?: boolean } = {}) {
-  const [taxYear, setTaxYear] = useState("2026");
+  const [taxYear, setTaxYear] = useState("2027");
   const [period, setPeriod] = useState<"monthly" | "yearly">("monthly");
   const [grossIncome, setGrossIncome] = useState(35000);
   const [age, setAge] = useState(30);
@@ -389,6 +408,7 @@ export default function TaxCalculatorPage({ noBg, noHeader }: { noBg?: boolean; 
                     onChange={(e) => setTaxYear(e.target.value)}
                     className="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#0077BB] focus:border-[#0077BB] outline-none transition-all font-semibold text-slate-800 appearance-none"
                   >
+                    <option value="2027">2027 (Mar &apos;26 – Feb &apos;27)</option>
                     <option value="2026">2026 (Mar &apos;25 – Feb &apos;26)</option>
                     <option value="2025">2025 (Mar &apos;24 – Feb &apos;25)</option>
                     <option value="2024">2024 (Mar &apos;23 – Feb &apos;24)</option>
@@ -484,7 +504,9 @@ export default function TaxCalculatorPage({ noBg, noHeader }: { noBg?: boolean; 
                   />
                 </div>
                 <p className="mt-2 text-xs text-slate-400">
-                  Limit: 27.5% of income or R350,000/year — calculated automatically.
+                  Limit: 27.5% of income or R
+                  {TAX_DATA[taxYear].retirementCap.toLocaleString("en-ZA")}/year —
+                  calculated automatically.
                 </p>
               </InputGroup>
 
