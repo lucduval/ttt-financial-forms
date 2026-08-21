@@ -348,7 +348,7 @@ export default function CalculatorsHubPage({
       {/* Page Hero */}
       {!noHeader && (
         <div className="bg-gradient-to-r from-[#0077BB] to-[#0168A2] text-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
             <div className="flex items-center gap-3 mb-3">
               <div className="bg-white/20 p-2.5 rounded-xl">
                 <Calculator className="w-6 h-6 text-white" />
@@ -369,7 +369,7 @@ export default function CalculatorsHubPage({
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         {/* Search */}
         <div className="max-w-md mb-10">
           <div className="relative">

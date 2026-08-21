@@ -354,8 +354,14 @@ function InputGroup({
         </label>
         {helpText && (
           <div className="group relative">
-            <Info className="w-4 h-4 text-slate-300 cursor-help" />
-            <div className="absolute right-0 bottom-6 w-64 p-2 bg-slate-800 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 leading-relaxed">
+            <button
+              type="button"
+              aria-label="More information"
+              className="block p-2.5 -m-2.5 text-slate-300 hover:text-slate-500 transition-colors"
+            >
+              <Info className="w-4 h-4" />
+            </button>
+            <div className="absolute right-0 bottom-7 w-64 max-w-[calc(100vw-3rem)] p-2.5 bg-slate-800 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 group-active:opacity-100 transition-opacity pointer-events-none z-20 leading-relaxed">
               {helpText}
             </div>
           </div>
@@ -384,6 +390,7 @@ function RandInput({
       )}
       <input
         type="number"
+        inputMode="decimal"
         value={value === 0 ? "" : value}
         onChange={(e) => {
           const raw = e.target.value;
@@ -615,7 +622,7 @@ export default function WearAndTearPage({
       {/* Page Hero */}
       {!noHeader && (
         <div className="bg-gradient-to-r from-[#0077BB] to-[#0168A2] text-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
             <div className="flex items-center gap-3 mb-3">
               <div className="bg-white/20 p-2.5 rounded-xl">
                 <Building2 className="w-6 h-6 text-white" />
@@ -636,8 +643,8 @@ export default function WearAndTearPage({
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
           {/* ── Left Column: Inputs ── */}
           <div className="lg:col-span-5 space-y-6">
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
@@ -825,7 +832,7 @@ export default function WearAndTearPage({
                     step={5}
                     value={businessPct}
                     onChange={(e) => setBusinessPct(Number(e.target.value))}
-                    className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-[#0077BB]"
+                    className="calc-slider w-full cursor-pointer"
                   />
                   <div className="text-center font-bold text-[#0077BB] bg-blue-50 py-1.5 rounded-lg text-sm">
                     {businessPct}% business · {100 - businessPct}% private
@@ -948,15 +955,15 @@ export default function WearAndTearPage({
           {/* ── Right Column: Results ── */}
           <div className="lg:col-span-7 space-y-6">
             {/* Hero result card */}
-            <div className="rounded-2xl shadow-xl text-white p-8 bg-gradient-to-br from-[#0077BB] to-[#01527e]">
-              <div className="flex justify-between items-start mb-6">
+            <div className="rounded-2xl shadow-xl text-white p-5 sm:p-8 bg-gradient-to-br from-[#0077BB] to-[#01527e]">
+              <div className="flex justify-between items-start gap-3 mb-6">
                 <div>
                   <p className="font-medium mb-1 text-sm text-blue-100">
                     {results.smallItem
                       ? "Full Write-Off This Year"
                       : `Wear & Tear Allowance — Year ${results.safeClaimYear}`}
                   </p>
-                  <div className="text-5xl font-bold tracking-tight">
+                  <div className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
                     R {fmt(results.thisYearAllowance)}
                   </div>
                   <p className="text-sm mt-2 text-blue-100">
@@ -975,15 +982,15 @@ export default function WearAndTearPage({
                           } method.`}
                   </p>
                 </div>
-                <div className="bg-white/15 p-3 rounded-xl">
+                <div className="bg-white/15 p-3 rounded-xl flex-shrink-0">
                   <Building2 className="w-8 h-8 text-white" />
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4 border-t border-white/20 pt-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 border-t border-white/20 pt-6">
                 <div>
                   <p className="text-sm mb-1 text-blue-100">Tax Saved</p>
-                  <p className="text-xl font-semibold">
+                  <p className="text-lg sm:text-xl font-semibold">
                     R {fmt(results.taxSaving)}
                   </p>
                 </div>
@@ -991,13 +998,13 @@ export default function WearAndTearPage({
                   <p className="text-sm mb-1 text-blue-100">
                     Claimed Over the Life
                   </p>
-                  <p className="text-xl font-semibold">
+                  <p className="text-lg sm:text-xl font-semibold">
                     R {fmt(results.totalClaimed)}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm mb-1 text-blue-100">Total Tax Saved</p>
-                  <p className="text-xl font-semibold">
+                  <p className="text-lg sm:text-xl font-semibold">
                     R {fmt(results.totalTaxSaving)}
                   </p>
                 </div>
@@ -1274,12 +1281,15 @@ export default function WearAndTearPage({
                   <h3 className="font-bold text-slate-800">
                     Write-Off Schedule
                   </h3>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-slate-400 text-right">
                     income tax value, year by year
+                    <span className="block sm:hidden text-[11px] text-slate-300">
+                      swipe the table sideways
+                    </span>
                   </span>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <table className="w-full min-w-[30rem] text-sm">
                     <thead>
                       <tr className="text-left text-xs uppercase tracking-wider text-slate-400 border-b border-slate-100">
                         <th className="py-2 pr-3 font-semibold">Year</th>
@@ -1425,12 +1435,12 @@ function Row({
 }) {
   return (
     <div
-      className={`flex justify-between text-sm ${
+      className={`flex justify-between gap-3 text-sm ${
         accent ? "text-[#0077BB] font-medium" : "text-slate-600"
       }`}
     >
-      <span>{label}</span>
-      <span>{value}</span>
+      <span className="min-w-0">{label}</span>
+      <span className="text-right whitespace-nowrap">{value}</span>
     </div>
   );
 }

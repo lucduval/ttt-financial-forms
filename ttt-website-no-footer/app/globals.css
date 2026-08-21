@@ -53,3 +53,59 @@ html {
   outline-offset: 3px;
   border-radius: 4px;
 }
+
+/* ─── Calculator Range Sliders ───────────────────────────────────────────────── */
+/* A bare `h-2` range input gives a phone only 8px of draggable height. Keep the
+   thin track, but let the input itself be a 2.75rem touch target with a thumb
+   big enough to grab. */
+.calc-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 2.75rem;
+  background: transparent;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.calc-slider::-webkit-slider-runnable-track {
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: #e2e8f0;
+}
+.calc-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 1.375rem;
+  width: 1.375rem;
+  margin-top: -0.4375rem; /* centre the thumb on the 0.5rem track */
+  border-radius: 9999px;
+  background: var(--blue);
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgb(15 23 42 / 0.3);
+  cursor: pointer;
+}
+
+.calc-slider::-moz-range-track {
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: #e2e8f0;
+}
+.calc-slider::-moz-range-thumb {
+  height: 1.375rem;
+  width: 1.375rem;
+  border-radius: 9999px;
+  background: var(--blue);
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgb(15 23 42 / 0.3);
+  cursor: pointer;
+}
+
+.calc-slider:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+.calc-slider:focus-visible::-moz-range-thumb {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}

@@ -103,8 +103,14 @@ function InputGroup({
         </label>
         {helpText && (
           <div className="group relative">
-            <Info className="w-4 h-4 text-slate-300 cursor-help" />
-            <div className="absolute right-0 bottom-6 w-64 p-2 bg-slate-800 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 leading-relaxed">
+            <button
+              type="button"
+              aria-label="More information"
+              className="block p-2.5 -m-2.5 text-slate-300 hover:text-slate-500 transition-colors"
+            >
+              <Info className="w-4 h-4" />
+            </button>
+            <div className="absolute right-0 bottom-7 w-64 max-w-[calc(100vw-3rem)] p-2.5 bg-slate-800 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 group-active:opacity-100 transition-opacity pointer-events-none z-20 leading-relaxed">
               {helpText}
             </div>
           </div>
@@ -129,6 +135,7 @@ function RandInput({
       </div>
       <input
         type="number"
+        inputMode="decimal"
         value={value === 0 ? "" : value}
         onChange={(e) => {
           const raw = e.target.value;
@@ -389,7 +396,7 @@ export default function ProvisionalTaxpayerCheckPage({
       {/* Page Hero */}
       {!noHeader && (
         <div className="bg-gradient-to-r from-[#0077BB] to-[#0168A2] text-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
             <div className="flex items-center gap-3 mb-3">
               <div className="bg-white/20 p-2.5 rounded-xl">
                 <Users className="w-6 h-6 text-white" />
@@ -410,8 +417,8 @@ export default function ProvisionalTaxpayerCheckPage({
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
           {/* ── Left Column: Inputs ── */}
           <div className="lg:col-span-5 space-y-6">
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
@@ -451,6 +458,7 @@ export default function ProvisionalTaxpayerCheckPage({
               >
                 <input
                   type="number"
+                  inputMode="decimal"
                   value={age === 0 ? "" : age}
                   onChange={(e) => {
                     const raw = e.target.value;
@@ -540,13 +548,13 @@ export default function ProvisionalTaxpayerCheckPage({
           <div className="lg:col-span-7 space-y-6">
             {/* Hero result card */}
             <div
-              className={`rounded-2xl shadow-xl text-white p-8 ${
+              className={`rounded-2xl shadow-xl text-white p-5 sm:p-8 ${
                 isProvisional
                   ? "bg-gradient-to-br from-[#0077BB] to-[#01527e]"
                   : "bg-gradient-to-br from-emerald-600 to-emerald-800"
               }`}
             >
-              <div className="flex justify-between items-start mb-6">
+              <div className="flex justify-between items-start gap-3 mb-6">
                 <div>
                   <p
                     className={`font-medium mb-1 text-sm ${
@@ -555,7 +563,7 @@ export default function ProvisionalTaxpayerCheckPage({
                   >
                     Your Status
                   </p>
-                  <div className="text-4xl sm:text-5xl font-bold tracking-tight">
+                  <div className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
                     {isProvisional ? "Yes — provisional" : "No — not provisional"}
                   </div>
                   <p
@@ -566,7 +574,7 @@ export default function ProvisionalTaxpayerCheckPage({
                     {results.reason}
                   </p>
                 </div>
-                <div className="bg-white/15 p-3 rounded-xl">
+                <div className="bg-white/15 p-3 rounded-xl flex-shrink-0">
                   {isProvisional ? (
                     <CheckCircle2 className="w-8 h-8 text-white" />
                   ) : (
@@ -576,7 +584,7 @@ export default function ProvisionalTaxpayerCheckPage({
               </div>
 
               {isProvisional && (
-                <div className="grid grid-cols-2 gap-4 border-t border-white/20 pt-6">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 border-t border-white/20 pt-6">
                   <div>
                     <p className="text-sm mb-1 text-blue-100">First IRP6 due</p>
                     <p className="text-lg font-semibold">

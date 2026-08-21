@@ -191,8 +191,14 @@ function InputGroup({
         </label>
         {helpText && (
           <div className="group relative">
-            <Info className="w-4 h-4 text-slate-300 cursor-help" />
-            <div className="absolute right-0 bottom-6 w-64 p-2 bg-slate-800 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 leading-relaxed">
+            <button
+              type="button"
+              aria-label="More information"
+              className="block p-2.5 -m-2.5 text-slate-300 hover:text-slate-500 transition-colors"
+            >
+              <Info className="w-4 h-4" />
+            </button>
+            <div className="absolute right-0 bottom-7 w-64 max-w-[calc(100vw-3rem)] p-2.5 bg-slate-800 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 group-active:opacity-100 transition-opacity pointer-events-none z-20 leading-relaxed">
               {helpText}
             </div>
           </div>
@@ -217,6 +223,7 @@ function RandInput({
       </div>
       <input
         type="number"
+        inputMode="decimal"
         value={value === 0 ? "" : value}
         onChange={(e) => {
           const raw = e.target.value;
@@ -384,7 +391,7 @@ export default function CryptoTaxPage({
       {/* Page Hero */}
       {!noHeader && (
         <div className="bg-gradient-to-r from-[#0077BB] to-[#0168A2] text-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
             <div className="flex items-center gap-3 mb-3">
               <div className="bg-white/20 p-2.5 rounded-xl">
                 <Bitcoin className="w-6 h-6 text-white" />
@@ -405,8 +412,8 @@ export default function CryptoTaxPage({
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
           {/* ── Left Column: Inputs ── */}
           <div className="lg:col-span-5 space-y-6">
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
@@ -426,7 +433,7 @@ export default function CryptoTaxPage({
                   <button
                     key={val}
                     onClick={() => setTreatment(val)}
-                    className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
+                    className={`flex-1 py-3 sm:py-2 text-sm font-semibold rounded-lg transition-all ${
                       treatment === val
                         ? "bg-white text-[#0077BB] shadow-sm"
                         : "text-slate-500 hover:text-slate-700"
@@ -528,7 +535,7 @@ export default function CryptoTaxPage({
                     max={85}
                     value={age}
                     onChange={(e) => setAge(Number(e.target.value))}
-                    className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-[#0077BB]"
+                    className="calc-slider w-full cursor-pointer"
                   />
                   <div className="text-center font-bold text-[#0077BB] bg-blue-50 py-1.5 rounded-lg text-sm">
                     {age} years old
@@ -588,8 +595,14 @@ export default function CryptoTaxPage({
                         </span>
                       </button>
                       <div className="group relative flex-shrink-0">
-                        <Info className="w-4 h-4 text-slate-300 cursor-help" />
-                        <div className="absolute right-0 bottom-6 w-64 p-2 bg-slate-800 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 leading-relaxed">
+                        <button
+                          type="button"
+                          aria-label="More information"
+                          className="block p-2.5 -m-2.5 text-slate-300 hover:text-slate-500 transition-colors"
+                        >
+                          <Info className="w-4 h-4" />
+                        </button>
+                        <div className="absolute right-0 bottom-7 w-64 max-w-[calc(100vw-3rem)] p-2.5 bg-slate-800 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 group-active:opacity-100 transition-opacity pointer-events-none z-20 leading-relaxed">
                           {f.help}
                         </div>
                       </div>
@@ -672,15 +685,15 @@ export default function CryptoTaxPage({
           <div className="lg:col-span-7 space-y-6">
             {/* Hero result card */}
             {results.isLoss ? (
-              <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-2xl shadow-xl text-white p-8">
-                <div className="flex justify-between items-start mb-6">
+              <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-2xl shadow-xl text-white p-5 sm:p-8">
+                <div className="flex justify-between items-start gap-3 mb-6">
                   <div>
                     <p className="text-emerald-100 font-medium mb-1 text-sm">
                       {isCapital
                         ? "Assessed Capital Loss to Carry Forward"
                         : "Tax Relief From Your Trading Loss"}
                     </p>
-                    <div className="text-5xl font-bold tracking-tight">
+                    <div className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
                       R{" "}
                       {fmt(
                         isCapital
@@ -693,40 +706,40 @@ export default function CryptoTaxPage({
                       disposals — no tax is due on them.
                     </p>
                   </div>
-                  <div className="bg-white/10 p-3 rounded-xl">
+                  <div className="bg-white/10 p-3 rounded-xl flex-shrink-0">
                     <TrendingDown className="w-8 h-8 text-emerald-100" />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 border-t border-white/10 pt-6">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 border-t border-white/10 pt-6">
                   <div>
-                    <p className="text-emerald-100 text-sm mb-1">
+                    <p className="text-emerald-100 text-xs sm:text-sm mb-1">
                       {isCapital ? "Annual Exclusion Absorbed" : "At Your Marginal Rate"}
                     </p>
-                    <p className="text-xl font-semibold">
+                    <p className="text-lg sm:text-xl font-semibold">
                       {isCapital
                         ? `R ${fmt(results.exclusionUsedOnLoss)}`
                         : `${(results.marginal * 100).toFixed(0)}%`}
                     </p>
                   </div>
                   <div>
-                    <p className="text-emerald-100 text-sm mb-1">
+                    <p className="text-emerald-100 text-xs sm:text-sm mb-1">
                       Tax Still Due on Rewards
                     </p>
-                    <p className="text-xl font-semibold">
+                    <p className="text-lg sm:text-xl font-semibold">
                       R {fmt(results.rewardTax)}
                     </p>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="bg-gradient-to-br from-[#0077BB] to-[#01527e] rounded-2xl shadow-xl text-white p-8">
-                <div className="flex justify-between items-start mb-6">
+              <div className="bg-gradient-to-br from-[#0077BB] to-[#01527e] rounded-2xl shadow-xl text-white p-5 sm:p-8">
+                <div className="flex justify-between items-start gap-3 mb-6">
                   <div>
                     <p className="text-blue-200 font-medium mb-1 text-sm">
                       Tax on Your Crypto
                     </p>
-                    <div className="text-5xl font-bold tracking-tight">
+                    <div className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
                       R {fmt(results.totalTax)}
                     </div>
                     <p className="text-sm text-blue-200 mt-2">
@@ -734,27 +747,27 @@ export default function CryptoTaxPage({
                       {isCapital ? "a capital gain" : "ordinary income"}.
                     </p>
                   </div>
-                  <div className="bg-white/10 p-3 rounded-xl">
+                  <div className="bg-white/10 p-3 rounded-xl flex-shrink-0">
                     <Bitcoin className="w-8 h-8 text-blue-200" />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 border-t border-white/10 pt-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 border-t border-white/10 pt-6">
                   <div>
-                    <p className="text-blue-200 text-sm mb-1">You Keep</p>
-                    <p className="text-xl font-semibold">
+                    <p className="text-blue-200 text-xs sm:text-sm mb-1">You Keep</p>
+                    <p className="text-lg sm:text-xl font-semibold">
                       R {fmt(results.netInPocket)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-blue-200 text-sm mb-1">Effective Rate</p>
-                    <p className="text-xl font-semibold">
+                    <p className="text-blue-200 text-xs sm:text-sm mb-1">Effective Rate</p>
+                    <p className="text-lg sm:text-xl font-semibold">
                       {results.effectiveRate.toFixed(1)}%
                     </p>
                   </div>
                   <div>
-                    <p className="text-blue-200 text-sm mb-1">Marginal Rate</p>
-                    <p className="text-xl font-semibold">
+                    <p className="text-blue-200 text-xs sm:text-sm mb-1">Marginal Rate</p>
+                    <p className="text-lg sm:text-xl font-semibold">
                       {(results.marginal * 100).toFixed(0)}%
                     </p>
                   </div>
@@ -1040,7 +1053,7 @@ function Row({
 }) {
   return (
     <div
-      className={`flex justify-between text-sm ${
+      className={`flex justify-between gap-3 text-sm ${
         green
           ? "text-emerald-600"
           : accent
@@ -1048,8 +1061,8 @@ function Row({
           : "text-slate-600"
       }`}
     >
-      <span>{label}</span>
-      <span>{value}</span>
+      <span className="min-w-0">{label}</span>
+      <span className="text-right whitespace-nowrap">{value}</span>
     </div>
   );
 }
