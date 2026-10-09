@@ -431,11 +431,11 @@ export default function ProvisionalTaxPage({
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+      <div className={`max-w-7xl mx-auto ${noBg ? "px-3" : "px-4"} sm:px-6 lg:px-8 py-6 sm:py-10`}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
           {/* ── Left Column: Inputs ── */}
           <div className="lg:col-span-5 space-y-6">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6">
               <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center">
                 <span className="w-1 h-6 bg-[#0077BB] rounded-full mr-3" />
                 Your Estimate
@@ -591,7 +591,7 @@ export default function ProvisionalTaxPage({
             </div>
 
             {/* Penalty checker */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6">
               <h2 className="text-lg font-bold text-slate-800 mb-2 flex items-center">
                 <span className="w-1 h-6 bg-[#E8872E] rounded-full mr-3" />
                 Penalty Check
@@ -696,7 +696,7 @@ export default function ProvisionalTaxPage({
 
             {/* Chart + Breakdown */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
                 <h3 className="font-bold text-slate-800 mb-4">
                   How the Year Is Paid
                 </h3>
@@ -744,7 +744,7 @@ export default function ProvisionalTaxPage({
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
                 <h3 className="font-bold text-slate-800 mb-4">
                   Detailed Calculation
                 </h3>
@@ -819,7 +819,7 @@ export default function ProvisionalTaxPage({
             {/* Penalty result */}
             {actualIncome > 0 && (
               <div
-                className={`rounded-2xl border shadow-sm p-6 ${
+                className={`rounded-2xl border shadow-sm p-4 sm:p-6 ${
                   results.penaltyApplies && results.penalty > 0
                     ? "bg-[#E8872E]/5 border-[#E8872E]/30"
                     : "bg-emerald-50 border-emerald-200"
@@ -870,7 +870,7 @@ export default function ProvisionalTaxPage({
             )}
 
             {/* Explainer */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
               <h3 className="font-bold text-slate-800 mb-4">
                 Four Things Provisional Taxpayers Get Wrong
               </h3>

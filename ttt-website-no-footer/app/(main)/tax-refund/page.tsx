@@ -288,7 +288,7 @@ function BoostAdvice({
 
   return (
     <div className="rounded-2xl overflow-hidden border border-blue-100 shadow-sm">
-      <div className="bg-gradient-to-r from-[#0077BB] to-[#0168A2] p-6 text-white">
+      <div className="bg-gradient-to-r from-[#0077BB] to-[#0168A2] p-4 sm:p-6 text-white">
         <div className="flex items-center gap-3 mb-2">
           <div className="bg-white/20 p-2 rounded-lg">
             <Sparkles className="w-5 h-5 text-[#E8872E]" />
@@ -301,7 +301,7 @@ function BoostAdvice({
         </p>
       </div>
 
-      <div className="p-6 bg-blue-50/40">
+      <div className="p-4 sm:p-6 bg-blue-50/40">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {[
             { label: "Contribute +R1,000 pm", data: s1, tag: "OPTION A" },
@@ -452,11 +452,11 @@ export default function TaxRefundPage({
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+      <div className={`max-w-7xl mx-auto ${noBg ? "px-3" : "px-4"} sm:px-6 lg:px-8 py-6 sm:py-10`}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
           {/* ── Left Column: Inputs ── */}
           <div className="lg:col-span-5 space-y-6">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6">
               <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center">
                 <span className="w-1 h-6 bg-[#0077BB] rounded-full mr-3" />
                 Your Details
@@ -675,7 +675,7 @@ export default function TaxRefundPage({
 
             {/* Chart + Breakdown */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
                 <h3 className="font-bold text-slate-800 mb-4">
                   Owed vs Paid
                 </h3>
@@ -710,7 +710,7 @@ export default function TaxRefundPage({
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
                 <h3 className="font-bold text-slate-800 mb-4">
                   Detailed Calculation
                 </h3>

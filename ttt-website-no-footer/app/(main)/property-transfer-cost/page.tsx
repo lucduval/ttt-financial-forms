@@ -529,11 +529,11 @@ export default function PropertyTransferCostPage({
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+      <div className={`max-w-7xl mx-auto ${noBg ? "px-3" : "px-4"} sm:px-6 lg:px-8 py-6 sm:py-10`}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
           {/* ── Left Column: Inputs ── */}
           <div className="lg:col-span-5 space-y-6">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6">
               <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center">
                 <span className="w-1 h-6 bg-[#0077BB] rounded-full mr-3" />
                 The Purchase
@@ -653,7 +653,7 @@ export default function PropertyTransferCostPage({
             </div>
 
             {/* Guideline + late payment options */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6">
               <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center">
                 <span className="w-1 h-6 bg-[#0077BB] rounded-full mr-3" />
                 Options
@@ -855,7 +855,7 @@ export default function PropertyTransferCostPage({
 
             {/* Chart + Breakdown */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 self-start">
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 self-start">
                 <h3 className="font-bold text-slate-800 mb-1">
                   Where the Money Goes
                 </h3>
@@ -907,7 +907,7 @@ export default function PropertyTransferCostPage({
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
                 <h3 className="font-bold text-slate-800 mb-4">
                   Detailed Calculation
                 </h3>
@@ -1050,7 +1050,7 @@ export default function PropertyTransferCostPage({
             </div>
 
             {/* Rate table visual */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
               <h3 className="font-bold text-slate-800 mb-1">
                 Transfer Duty Bands
               </h3>
@@ -1094,7 +1094,7 @@ export default function PropertyTransferCostPage({
             </div>
 
             {/* Explainer */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
               <h3 className="font-bold text-slate-800 mb-4">
                 Four Things Buyers Get Wrong
               </h3>
@@ -1149,7 +1149,7 @@ export default function PropertyTransferCostPage({
             </div>
 
             {/* Sources */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
               <h3 className="font-bold text-slate-800 mb-3">
                 What Each Number Comes From
               </h3>

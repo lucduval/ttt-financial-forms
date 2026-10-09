@@ -604,11 +604,11 @@ export default function PayrollTaxPage({
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+      <div className={`max-w-7xl mx-auto ${noBg ? "px-3" : "px-4"} sm:px-6 lg:px-8 py-6 sm:py-10`}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
           {/* ── Left Column: Inputs ── */}
           <div className="lg:col-span-5 space-y-6">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6">
               <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center">
                 <span className="w-1 h-6 bg-[#0077BB] rounded-full mr-3" />
                 The Employee
@@ -770,7 +770,7 @@ export default function PayrollTaxPage({
             </div>
 
             {/* Employer */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6">
               <h2 className="text-lg font-bold text-slate-800 mb-2 flex items-center">
                 <span className="w-1 h-6 bg-[#0077BB] rounded-full mr-3" />
                 The Employer
@@ -812,7 +812,7 @@ export default function PayrollTaxPage({
             </div>
 
             {/* ETI */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6">
               <h2 className="text-lg font-bold text-slate-800 mb-2 flex items-center">
                 <span className="w-1 h-6 bg-[#0077BB] rounded-full mr-3" />
                 Employment Tax Incentive
@@ -1007,7 +1007,7 @@ export default function PayrollTaxPage({
 
             {/* Chart + Breakdown */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
                 <h3 className="font-bold text-slate-800 mb-1">
                   What Makes Up The EMP201
                 </h3>
@@ -1047,7 +1047,7 @@ export default function PayrollTaxPage({
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
                 <h3 className="font-bold text-slate-800 mb-4">
                   Detailed Calculation
                 </h3>
@@ -1140,7 +1140,7 @@ export default function PayrollTaxPage({
 
             {/* Two sides of the payslip */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
                 <h3 className="font-bold text-slate-800 mb-1">
                   What It Costs You
                 </h3>
@@ -1174,7 +1174,7 @@ export default function PayrollTaxPage({
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
                 <h3 className="font-bold text-slate-800 mb-1">
                   What They Take Home
                 </h3>
@@ -1223,7 +1223,7 @@ export default function PayrollTaxPage({
             </div>
 
             {/* Explainer */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
               <h3 className="font-bold text-slate-800 mb-4">
                 Four Payroll Rules That Catch People Out
               </h3>
@@ -1271,7 +1271,7 @@ export default function PayrollTaxPage({
             </div>
 
             {/* ETI table reference */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
               <h3 className="font-bold text-slate-800 mb-1 flex items-center gap-2">
                 <GraduationCap size={16} className="text-[#0077BB]" />
                 ETI Table — {results.etiTable.label}
