@@ -27,6 +27,11 @@ export default function IframeResizer() {
         // Fire immediately on mount
         sendHeight();
 
+        // Tell the host a new page loaded inside the iframe (e.g. hub → calculator),
+        // so it can scroll the iframe's top back into view. Hosts that don't
+        // listen for this message type simply ignore it.
+        window.parent.postMessage({ type: "EMBED_PAGE_LOADED" }, "*");
+
         // Fire on window resize (user resizing the browser window)
         window.addEventListener("resize", sendHeight);
 

@@ -268,7 +268,7 @@ const CATEGORIES: { title: string; calcs: Calc[] }[] = [
 
 // ─── Card ───────────────────────────────────────────────────────────────────
 
-function CalcCard({ calc }: { calc: Calc }) {
+function CalcCard({ calc, embedded }: { calc: Calc; embedded?: boolean }) {
   const Icon = calc.icon;
   const inner = (
     <div
@@ -311,7 +311,10 @@ function CalcCard({ calc }: { calc: Calc }) {
 
   if (!calc.live) return inner;
   return (
-    <a href={calc.href} className="block h-full">
+    <a
+      href={embedded ? `/embed${calc.href}?from=hub` : calc.href}
+      className="block h-full"
+    >
       {inner}
     </a>
   );
@@ -398,7 +401,7 @@ export default function CalculatorsHubPage({
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {cat.calcs.map((calc) => (
-                  <CalcCard key={calc.name} calc={calc} />
+                  <CalcCard key={calc.name} calc={calc} embedded={noBg} />
                 ))}
               </div>
             </div>

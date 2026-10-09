@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import IframeResizer from "./IframeResizer";
+import HubBackLink from "./HubBackLink";
 
 export default function EmbedLayout({
   children,
@@ -13,6 +15,9 @@ export default function EmbedLayout({
           so when resizing works the body fits its viewport and no scrollbar shows. */}
       <style>{`html, body { margin: 0; padding: 0; }`}</style>
       <div className="w-full" data-embed-content>
+        <Suspense fallback={null}>
+          <HubBackLink />
+        </Suspense>
         {children}
         <IframeResizer />
       </div>
